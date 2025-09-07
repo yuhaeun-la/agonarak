@@ -17,21 +17,21 @@ export async function GET() {
             genre: true
           }
         }
-      } as any,
+      },
       orderBy: {
         createdAt: 'desc'
       }
-    }) as any[]
+    })
 
     // 데이터 구조 변환 (프론트엔드에서 사용하기 쉽게)
     const transformedBooks = books.map(book => ({
       ...book,
-      genres: book.genres?.map((bg: any) => bg.genre.name) || [],
+      genres: book.genres?.map((bg) => bg.genre.name) || [],
       addedBy: book.addedBy?.nickname || 'Unknown'
     }))
     
     return NextResponse.json(transformedBooks)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to fetch books:', error)
     return NextResponse.json(
       { error: 'Failed to fetch books' },
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
           registeredDate: new Date(registeredDate),
           clubId: club.id,
           addedById: addedById || null
-        } as any
+        }
       })
 
       // 장르 관계 생성
@@ -127,8 +127,8 @@ export async function POST(request: NextRequest) {
             genre: true
           }
         }
-      } as any
-    }) as any
+      }
+    })
 
     // 데이터 구조 변환
     if (!createdBook) {
@@ -137,12 +137,12 @@ export async function POST(request: NextRequest) {
 
     const transformedBook = {
       ...createdBook,
-      genres: createdBook.genres?.map((bg: any) => bg.genre.name) || [],
+      genres: createdBook.genres?.map((bg) => bg.genre.name) || [],
       addedBy: createdBook.addedBy?.nickname || 'Unknown'
     }
 
     return NextResponse.json(transformedBook, { status: 201 })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to create book:', error)
     return NextResponse.json(
       { error: 'Failed to create book' },

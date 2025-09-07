@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 export function useLocalStorage<T>(key: string, initialValue: T) {
   // 초기값을 함수로 지연 초기화

@@ -33,7 +33,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { BookOpen, Plus, Search, Filter, Star, User, Calendar, BookMarked } from 'lucide-react'
+import { BookOpen, Plus, Search, Filter, User, Calendar, BookMarked } from 'lucide-react'
 
 interface Book {
   id: string
@@ -185,9 +185,9 @@ export default function Books() {
       // 다이얼로그 닫기
       setIsAddDialogOpen(false)
       setError('')
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error adding book:', error)
-      setError(error.message || '책 추가에 실패했습니다.')
+      setError(error instanceof Error ? error.message : '책 추가에 실패했습니다.')
     } finally {
       setSubmitting(false)
     }

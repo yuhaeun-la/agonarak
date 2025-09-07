@@ -129,9 +129,9 @@ export default function Members() {
       // 다이얼로그 닫기
       setIsAddDialogOpen(false)
       setError('')
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error adding member:', error)
-      setError(error.message || '멤버 추가에 실패했습니다.')
+      setError(error instanceof Error ? error.message : '멤버 추가에 실패했습니다.')
     } finally {
       setSubmitting(false)
     }
@@ -187,9 +187,9 @@ export default function Members() {
       setEditingMember(null)
       setIsEditDialogOpen(false)
       setError('')
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating member:', error)
-      setError(error.message || '멤버 수정에 실패했습니다.')
+      setError(error instanceof Error ? error.message : '멤버 수정에 실패했습니다.')
     } finally {
       setSubmitting(false)
     }
@@ -211,7 +211,7 @@ export default function Members() {
       // 멤버 목록 새로고침
       await fetchMembers()
       setError('')
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting member:', error)
       setError(error.message || '멤버 삭제에 실패했습니다.')
     }

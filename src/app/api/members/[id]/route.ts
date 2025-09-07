@@ -29,7 +29,7 @@ export async function PUT(
     })
 
     return NextResponse.json(member)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to update member:', error)
     
     if (error.code === 'P2025') {
@@ -66,7 +66,7 @@ export async function DELETE(
     })
 
     return NextResponse.json({ message: 'Member deleted successfully' })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to delete member:', error)
     
     if (error.code === 'P2025') {

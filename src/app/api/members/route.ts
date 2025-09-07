@@ -37,7 +37,7 @@ export async function GET() {
     })
     
     return NextResponse.json(membersWithStats)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to fetch members:', error)
     return NextResponse.json(
       { error: 'Failed to fetch members' },
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json(member, { status: 201 })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to create member:', error)
     
     // 중복 닉네임 에러 처리

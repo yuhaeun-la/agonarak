@@ -11,9 +11,6 @@ import {
   Users, 
   TrendingUp, 
   Clock,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
   MapPin,
   User
 } from 'lucide-react'

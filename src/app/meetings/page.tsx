@@ -53,7 +53,7 @@ export default function Meetings() {
   const [searchTerm, setSearchTerm] = useState('')
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [meetings, setMeetings] = useState<Meeting[]>([])
-  const [members, setMembers] = useState<any[]>([])
+  const [members, setMembers] = useState<{id: string; nickname: string}[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -159,9 +159,9 @@ export default function Meetings() {
       // 다이얼로그 닫기
       setIsAddDialogOpen(false)
       setError('')
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error adding meeting:', error)
-      setError(error.message || '모임 추가에 실패했습니다.')
+      setError(error instanceof Error ? error.message : '모임 추가에 실패했습니다.')
     } finally {
       setSubmitting(false)
     }
@@ -222,16 +222,6 @@ export default function Meetings() {
     }
   }
 
-  const getAttendanceInfo = (meeting: Meeting) => {
-    const totalAttendees = meeting.attendances.length
-    const attendingCount = meeting.attendances.filter(att => att.status === 'ATTENDING').length
-    
-    return {
-      total: totalAttendees,
-      attending: attendingCount,
-      percentage: totalAttendees > 0 ? Math.round((attendingCount / totalAttendees) * 100) : 0
-    }
-  }
 
   // 다가오는 모임과 지난 모임 분리
   const now = new Date()

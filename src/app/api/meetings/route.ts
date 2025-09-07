@@ -36,15 +36,15 @@ export async function GET() {
     // 데이터 구조 변환
     const transformedMeetings = meetings.map(meeting => ({
       ...meeting,
-      books: meeting.books.map((mb: any) => mb.book),
-      attendances: meeting.attendances.map((att: any) => ({
+      books: meeting.books.map((mb) => mb.book),
+      attendances: meeting.attendances.map((att) => ({
         member: att.member,
         status: att.status
       }))
     }))
     
     return NextResponse.json(transformedMeetings)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to fetch meetings:', error)
     return NextResponse.json(
       { error: 'Failed to fetch meetings' },
@@ -141,8 +141,8 @@ export async function POST(request: NextRequest) {
     // 데이터 구조 변환
     const transformedMeeting = {
       ...meeting,
-      books: meeting?.books.map((mb: any) => mb.book),
-      attendances: meeting?.attendances.map((att: any) => ({
+      books: meeting?.books.map((mb) => mb.book),
+      attendances: meeting?.attendances.map((att) => ({
         member: att.member,
         status: att.status
 
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(transformedMeeting, { status: 201 })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to create meeting:', error)
     return NextResponse.json(
       { error: 'Failed to create meeting' },
