@@ -17,16 +17,16 @@ export async function GET() {
             genre: true
           }
         }
-      },
+      } as any,
       orderBy: {
         createdAt: 'desc'
       }
     })
 
     // 데이터 구조 변환 (프론트엔드에서 사용하기 쉽게)
-    const transformedBooks = books.map(book => ({
+    const transformedBooks = books.map((book: any) => ({
       ...book,
-      genres: book.genres?.map((bg) => bg.genre.name) || [],
+      genres: book.genres?.map((bg: any) => bg.genre.name) || [],
       addedBy: book.addedBy?.nickname || 'Unknown'
     }))
     
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
           registeredDate: new Date(registeredDate),
           clubId: club.id,
           addedById: addedById || null
-        }
+        } as any
       })
 
       // 장르 관계 생성
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
             genre: true
           }
         }
-      }
+      } as any
     })
 
     // 데이터 구조 변환
@@ -136,9 +136,9 @@ export async function POST(request: NextRequest) {
     }
 
     const transformedBook = {
-      ...createdBook,
-      genres: createdBook.genres?.map((bg) => bg.genre.name) || [],
-      addedBy: createdBook.addedBy?.nickname || 'Unknown'
+      ...(createdBook as any),
+      genres: (createdBook as any).genres?.map((bg: any) => bg.genre.name) || [],
+      addedBy: (createdBook as any).addedBy?.nickname || 'Unknown'
     }
 
     return NextResponse.json(transformedBook, { status: 201 })

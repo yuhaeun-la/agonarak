@@ -32,14 +32,14 @@ export async function PUT(
   } catch (error: unknown) {
     console.error('Failed to update member:', error)
     
-    if (error.code === 'P2025') {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'P2025') {
       return NextResponse.json(
         { error: 'Member not found' },
         { status: 404 }
       )
     }
     
-    if (error.code === 'P2002') {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
       return NextResponse.json(
         { error: 'Nickname already exists in this club' },
         { status: 409 }
@@ -69,7 +69,7 @@ export async function DELETE(
   } catch (error: unknown) {
     console.error('Failed to delete member:', error)
     
-    if (error.code === 'P2025') {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'P2025') {
       return NextResponse.json(
         { error: 'Member not found' },
         { status: 404 }

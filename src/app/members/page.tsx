@@ -213,7 +213,7 @@ export default function Members() {
       setError('')
     } catch (error: unknown) {
       console.error('Error deleting member:', error)
-      setError(error.message || '멤버 삭제에 실패했습니다.')
+      setError(error instanceof Error ? error.message : '멤버 삭제에 실패했습니다.')
     }
   }
 

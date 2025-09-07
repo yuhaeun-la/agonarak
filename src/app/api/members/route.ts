@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     console.error('Failed to create member:', error)
     
     // 중복 닉네임 에러 처리
-    if (error.code === 'P2002') {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
       return NextResponse.json(
         { error: 'Nickname already exists in this club' },
         { status: 409 }
