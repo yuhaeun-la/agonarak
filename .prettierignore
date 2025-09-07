@@ -1,0 +1,10 @@
+node_modules
+.next
+.vercel
+dist
+build
+*.log
+.DS_Store
+.env*
+dev.db*
+public
