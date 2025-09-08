@@ -4,12 +4,12 @@ import { prisma } from '@/lib/prisma'
 // PUT - 멤버 수정
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json()
     const { nickname, role, contact } = body
-    const { id } = params
+    const { id } = await params
 
     // 입력 검증
     if (!nickname) {
@@ -56,10 +56,10 @@ export async function PUT(
 // DELETE - 멤버 삭제
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
 
     await prisma.member.delete({
       where: { id }

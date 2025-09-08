@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import type { Member } from '@prisma/client'
 
 // GET - 모든 멤버 조회
 export async function GET() {
@@ -72,13 +73,13 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    const member = await prisma.member.create({
+    const member: Member = await prisma.member.create({
       data: {
         nickname,
         role: role || 'MEMBER',
         contact: contact || '',
         clubId: club.id
-      } as any
+      }
     })
 
     return NextResponse.json(member, { status: 201 })
