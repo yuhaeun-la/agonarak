@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Navbar } from '@/components/layout/navbar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -44,6 +45,7 @@ interface Book {
 }
 
 export default function Home() {
+  const router = useRouter()
   const [stats, setStats] = useState<Stats>({
     totalMembers: 0,
     upcomingMeetings: 0,
@@ -221,7 +223,7 @@ export default function Home() {
                   <p className="text-gray-500 mb-4">
                     새로운 모임을 추가해보세요.
                   </p>
-                  <Button>
+                  <Button onClick={() => router.push('/meetings')}>
                     <Calendar className="h-4 w-4 mr-2" />
                     모임 추가하기
                   </Button>
@@ -265,7 +267,7 @@ export default function Home() {
                     )
                   })}
                   <div className="text-center pt-4">
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => router.push('/meetings')}>
                       모든 모임 보기
                     </Button>
                   </div>
@@ -295,7 +297,7 @@ export default function Home() {
                   <p className="text-gray-500 mb-4">
                     첫 번째 책을 추가해보세요.
                   </p>
-                  <Button>
+                  <Button onClick={() => router.push('/books')}>
                     <BookOpen className="h-4 w-4 mr-2" />
                     책 추가하기
                   </Button>
@@ -343,7 +345,7 @@ export default function Home() {
                     </div>
                   ))}
                   <div className="text-center pt-4">
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => router.push('/books')}>
                       모든 책 보기
                     </Button>
                   </div>
@@ -363,19 +365,34 @@ export default function Home() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Button className="h-20 flex-col space-y-2">
+              <Button 
+                className="h-20 flex-col space-y-2"
+                onClick={() => router.push('/members')}
+              >
                 <Users className="h-6 w-6" />
                 <span>멤버 관리</span>
               </Button>
-              <Button variant="outline" className="h-20 flex-col space-y-2">
+              <Button 
+                variant="outline" 
+                className="h-20 flex-col space-y-2"
+                onClick={() => router.push('/meetings')}
+              >
                 <Calendar className="h-6 w-6" />
                 <span>모임 일정</span>
               </Button>
-              <Button variant="outline" className="h-20 flex-col space-y-2">
+              <Button 
+                variant="outline" 
+                className="h-20 flex-col space-y-2"
+                onClick={() => router.push('/books')}
+              >
                 <BookOpen className="h-6 w-6" />
                 <span>책 관리</span>
               </Button>
-              <Button variant="outline" className="h-20 flex-col space-y-2">
+              <Button 
+                variant="outline" 
+                className="h-20 flex-col space-y-2"
+                onClick={() => router.push('/books')}
+              >
                 <TrendingUp className="h-6 w-6" />
                 <span>통계 보기</span>
               </Button>
