@@ -25,6 +25,7 @@ interface Book {
   notes: string
   registeredDate: string
   createdAt: string
+  addedById: string | null
 }
 
 interface Member {
@@ -49,7 +50,7 @@ export default function MemberBooksPage() {
     if (memberId) {
       Promise.all([fetchMember(), fetchMemberBooks()])
     }
-  }, [memberId])
+  }, [memberId]) // fetchMember와 fetchMemberBooks는 매번 새로 생성되므로 의존성에서 제외
 
   const fetchMember = async () => {
     try {
@@ -79,7 +80,7 @@ export default function MemberBooksPage() {
       const allBooks = await response.json()
       
       // 해당 멤버가 추가한 책들만 필터링
-      const memberBooks = allBooks.filter((book: any) => 
+      const memberBooks = allBooks.filter((book: Book) => 
         book.addedById === memberId
       )
       

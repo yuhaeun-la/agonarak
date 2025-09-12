@@ -299,18 +299,6 @@ export default function Meetings() {
     }
   }
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'ATTENDING':
-        return <Badge className="bg-green-100 text-green-800">참석</Badge>
-      case 'NOT_ATTENDING':
-        return <Badge className="bg-red-100 text-red-800">불참</Badge>
-      case 'UNDECIDED':
-        return <Badge className="bg-yellow-100 text-yellow-800">미정</Badge>
-      default:
-        return <Badge variant="outline">미정</Badge>
-    }
-  }
 
 
   // 다가오는 모임과 지난 모임 분리
