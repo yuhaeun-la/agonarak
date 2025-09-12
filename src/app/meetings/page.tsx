@@ -26,7 +26,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Label } from '@/components/ui/label'
-import { CalendarDays, MapPin, Clock, Plus, Search, Users, Calendar } from 'lucide-react'
+import { CalendarDays, MapPin, Clock, Plus, Search, Users, Calendar, Trash2, Edit } from 'lucide-react'
 
 interface Meeting {
   id: string
@@ -164,6 +164,28 @@ export default function Meetings() {
       setError(error instanceof Error ? error.message : '모임 추가에 실패했습니다.')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const handleDeleteMeeting = async (meetingId: string) => {
+    if (!confirm('정말로 이 모임을 삭제하시겠습니까?')) return
+
+    try {
+      const response = await fetch(`/api/meetings/${meetingId}`, {
+        method: 'DELETE'
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete meeting')
+      }
+
+      // 모임 목록 새로고침
+      await fetchMeetings()
+      setError('')
+    } catch (error: unknown) {
+      console.error('Error deleting meeting:', error)
+      setError(error instanceof Error ? error.message : '모임 삭제에 실패했습니다.')
     }
   }
 
@@ -553,6 +575,7 @@ export default function Meetings() {
                     <TableHead>책</TableHead>
                     <TableHead>참석 현황</TableHead>
                     <TableHead>메모</TableHead>
+                    <TableHead>작업</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -621,6 +644,19 @@ export default function Meetings() {
                           ) : (
                             <span className="text-sm text-gray-400">메모 없음</span>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteMeeting(meeting.id)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-3 w-3 mr-1" />
+                              삭제
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     )
