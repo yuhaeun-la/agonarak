@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,41 +7,127 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 사용자는 멤버로만 관리 (별도 인증 없음)
-
-// 독서 모임
 model Club {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   name        String
   description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // 관계
-  members   Member[]
-  books     Book[]
-  meetings  Meeting[]
-  genres    Genre[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  books       Book[]
+  genres      Genre[]
+  meetings    Meeting[]
+  members     Member[]
 }
 
-// 모임 멤버
 model Member {
-  id       String     @id @default(cuid())
-  nickname String
-  role     MemberRole @default(MEMBER)
-  contact  String?
-  isActive Boolean    @default(true)
-
-  // 외래키
-  clubId String
-
-  // 관계
-  club         Club         @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  books        Book[]
+  id           String        @id @default(cuid())
+  nickname     String
+  contact      String?
+  isActive     Boolean       @default(true)
+  clubId       String
+  role         MemberRole    @default(MEMBER)
   attendances  Attendance[]
+  books        Book[]
+  club         Club          @relation(fields: [clubId], references: [id], onDelete: Cascade)
   readingNotes ReadingNote[]
 
   @@unique([nickname, clubId])
+}
+
+model Meeting {
+  id          String        @id @default(cuid())
+  title       String
+  date        DateTime
+  location    String?
+  memo        String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  clubId      String
+  attendances Attendance[]
+  club        Club          @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  books       MeetingBook[]
+}
+
+model Book {
+  id             String        @id @default(cuid())
+  title          String
+  author         String
+  notes          String?
+  registeredDate DateTime
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  clubId         String
+  addedById      String?
+  addedBy        Member?       @relation(fields: [addedById], references: [id])
+  club           Club          @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  genres         BookGenre[]
+  meetingBooks   MeetingBook[]
+  readingNotes   ReadingNote[]
+}
+
+model MeetingBook {
+  id        String   @id @default(cuid())
+  meetingId String
+  bookId    String
+  createdAt DateTime @default(now())
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  meeting   Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  @@unique([meetingId, bookId])
+}
+
+model Genre {
+  id          String      @id @default(cuid())
+  name        String
+  description String?
+  color       String?     @default("#6B7280")
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  clubId      String
+  bookGenres  BookGenre[]
+  club        Club        @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  @@unique([name, clubId])
+}
+
+model BookGenre {
+  id      String @id @default(cuid())
+  bookId  String
+  genreId String
+  book    Book   @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  genre   Genre  @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@unique([bookId, genreId])
+}
+
+model Attendance {
+  id        String           @id @default(cuid())
+  status    AttendanceStatus @default(UNDECIDED)
+  note      String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  meetingId String
+  memberId  String
+  meeting   Meeting          @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  member    Member           @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([meetingId, memberId])
+}
+
+model ReadingNote {
+  id          String   @id @default(cuid())
+  content     String
+  rating      Int?     @default(0)
+  isPublic    Boolean  @default(true)
+  attachments String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  bookId      String
+  memberId    String
+  book        Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([bookId, memberId])
 }
 
 enum MemberRole {
@@ -52,142 +135,8 @@ enum MemberRole {
   MEMBER
 }
 
-// 모임 일정
-model Meeting {
-  id          String    @id @default(cuid())
-  title       String
-  date        DateTime
-  location    String?
-  memo        String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // 외래키
-  clubId String
-
-  // 관계
-  club        Club         @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  books       MeetingBook[]
-  attendances Attendance[]
-}
-
-// 책
-model Book {
-  id             String   @id @default(cuid())
-  title          String
-  author         String
-  notes          String?
-  registeredDate DateTime // 사용자가 입력하는 등록일
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  // 외래키
-  clubId    String
-  addedById String?
-
-  // 관계
-  club         Club         @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  addedBy      Member?      @relation(fields: [addedById], references: [id], onDelete: SetNull)
-  meetingBooks MeetingBook[]
-  genres       BookGenre[]
-  readingNotes ReadingNote[]
-
-  @@unique([title, author, clubId])
-}
-
-// 모임-책 연결 테이블 (한 모임에서 여러 책 읽기 가능)
-model MeetingBook {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-
-  // 외래키
-  meetingId String
-  bookId    String
-
-  // 관계
-  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
-  book    Book    @relation(fields: [bookId], references: [id], onDelete: Cascade)
-
-  @@unique([meetingId, bookId])
-}
-
-// 장르/분야
-model Genre {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  color       String?  @default("#6B7280") // 태그 색상
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // 외래키
-  clubId String
-
-  // 관계
-  club       Club        @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  bookGenres BookGenre[]
-
-  @@unique([name, clubId])
-}
-
-// 책-장르 연결 테이블 (다중 태그 가능)
-model BookGenre {
-  id String @id @default(cuid())
-
-  // 외래키
-  bookId  String
-  genreId String
-
-  // 관계
-  book  Book  @relation(fields: [bookId], references: [id], onDelete: Cascade)
-  genre Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
-
-  @@unique([bookId, genreId])
-}
-
-// 참석 여부
-model Attendance {
-  id     String           @id @default(cuid())
-  status AttendanceStatus @default(UNDECIDED)
-  note   String?
-
-  // 외래키
-  meetingId String
-  memberId  String
-
-  // 관계
-  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
-  member  Member  @relation(fields: [memberId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([meetingId, memberId])
-}
-
 enum AttendanceStatus {
   ATTENDING
   NOT_ATTENDING
   UNDECIDED
-}
-
-// 독서 노트
-model ReadingNote {
-  id          String    @id @default(cuid())
-  content     String
-  rating      Int?      @default(0) // 1-5점
-  isPublic    Boolean   @default(true)
-  attachments String?   // JSON 형태로 파일 정보 저장
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // 외래키
-  bookId   String
-  memberId String
-
-  // 관계
-  book   Book   @relation(fields: [bookId], references: [id], onDelete: Cascade)
-  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
-
-  @@unique([bookId, memberId])
 }

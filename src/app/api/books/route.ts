@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
 
     // 트랜잭션으로 책과 장르 관계 생성
     const result = await prisma.$transaction(async (tx) => {
-      // 책 생성
+      // 책 생성 (이제 같은 책도 멤버별로 별도 등록 가능)
       const book = await tx.book.create({
         data: {
           title,

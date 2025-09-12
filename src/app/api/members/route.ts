@@ -5,6 +5,17 @@ import type { Member } from '@prisma/client'
 // GET - 모든 멤버 조회
 export async function GET() {
   try {
+    const now = new Date()
+    
+    // 현재 시점 기준으로 이미 지난 모임 수만 조회
+    const pastMeetingsCount = await prisma.meeting.count({
+      where: {
+        date: {
+          lt: now // 현재 시점보다 이전 모임만
+        }
+      }
+    })
+    
     const members = await prisma.member.findMany({
       include: {
         attendances: {
@@ -18,20 +29,22 @@ export async function GET() {
       }
     })
 
-    // 참석률 통계 계산
+    // 참석률 통계 계산 (지난 모임 기준)
     const membersWithStats = members.map(member => {
-      const totalMeetings = member.attendances.length
+      // 지난 모임 중에서 참석한 모임만 카운트
       const attendedMeetings = member.attendances.filter(
-        attendance => attendance.status === 'ATTENDING'
+        attendance => attendance.status === 'ATTENDING' && 
+        new Date(attendance.meeting.date) < now // 지난 모임만
       ).length
-      const attendanceRate = totalMeetings > 0 ? (attendedMeetings / totalMeetings) * 100 : 0
+      
+      const attendanceRate = pastMeetingsCount > 0 ? (attendedMeetings / pastMeetingsCount) * 100 : 0
 
       return {
         ...member,
         attendanceStats: {
-          totalMeetings,
-          attendedMeetings,
-          attendanceRate
+          totalMeetings: pastMeetingsCount, // 지난 모임 수
+          attendedMeetings, // 실제 참석한 모임 수 (지난 모임 중)
+          attendanceRate: Math.round(attendanceRate * 100) / 100 // 소수점 2자리까지
         },
         attendances: undefined // 프론트엔드에 불필요한 데이터 제거
       }

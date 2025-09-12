@@ -83,15 +83,24 @@ export default function Home() {
         new Date(meeting.date) >= now
       ).slice(0, 3)
       
-      const booksThisMonth = books.filter((book: Book) => 
-        new Date(book.createdAt) >= thisMonth
-      ).length
+      // 고유한 책만 계산 (제목 + 저자 기준)
+      const uniqueBooks = new Set()
+      const uniqueBooksThisMonth = new Set()
+      
+      books.forEach((book: Book) => {
+        const bookKey = `${book.title}-${book.author}`
+        uniqueBooks.add(bookKey)
+        
+        if (new Date(book.createdAt) >= thisMonth) {
+          uniqueBooksThisMonth.add(bookKey)
+        }
+      })
 
       setStats({
         totalMembers: members.length,
         upcomingMeetings: upcomingMeetingsList.length,
-        booksThisMonth,
-        totalBooks: books.length
+        booksThisMonth: uniqueBooksThisMonth.size,
+        totalBooks: uniqueBooks.size
       })
 
       setUpcomingMeetings(upcomingMeetingsList)
