@@ -234,7 +234,7 @@ export default function Members() {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">멤버 관리</h1>
-          <p className="text-gray-600">북클럽 멤버들을 관리하고 정보를 확인하세요.</p>
+          <p className="text-gray-600">아고나락 멤버들을 관리하고 정보를 확인하세요.</p>
         </div>
 
         {/* 에러 메시지 */}

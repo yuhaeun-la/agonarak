@@ -325,7 +325,7 @@ export default function Meetings() {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">모임 일정</h1>
-          <p className="text-gray-600">북클럽 모임 일정을 관리하고 참석 현황을 확인하세요.</p>
+          <p className="text-gray-600">아고나락 모임 일정을 관리하고 참석 현황을 확인하세요.</p>
         </div>
 
         {/* 에러 메시지 */}

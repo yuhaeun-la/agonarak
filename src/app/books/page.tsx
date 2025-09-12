@@ -355,7 +355,7 @@ export default function Books() {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">책 관리</h1>
-          <p className="text-gray-600">북클럽에서 읽은 책들을 관리하고 기록을 남기세요.</p>
+          <p className="text-gray-600">아고나락에서 읽은 책들을 관리하고 기록을 남기세요.</p>
         </div>
 
         {/* 에러 메시지 */}

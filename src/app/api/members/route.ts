@@ -80,8 +80,8 @@ export async function POST(request: NextRequest) {
       // 기본 클럽이 없으면 생성
       club = await prisma.club.create({
         data: {
-          name: '우리 북클럽',
-          description: '기본 북클럽'
+          name: '아고나락',
+          description: '기본 아고나락'
         }
       })
     }
