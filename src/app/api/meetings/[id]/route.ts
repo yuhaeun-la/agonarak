@@ -56,12 +56,12 @@ export async function PUT(
   try {
     const { id } = await params
     const body = await request.json()
-    const { title, date, location, memo, attendees } = body
+    const { title, date, time, location, memo, attendees } = body
 
     // 입력 검증
-    if (!title || !date) {
+    if (!title || !date || !time) {
       return NextResponse.json(
-        { error: 'Title and date are required' },
+        { error: 'Title, date and time are required' },
         { status: 400 }
       )
     }
@@ -78,6 +78,9 @@ export async function PUT(
       )
     }
 
+    // 날짜와 시간을 합쳐서 DateTime으로 변환
+    const meetingDateTime = new Date(`${date}T${time}:00`)
+
     // 트랜잭션으로 모임 정보 수정 및 참석자 업데이트
     const updatedMeeting = await prisma.$transaction(async (tx) => {
       // 모임 정보 업데이트
@@ -85,7 +88,7 @@ export async function PUT(
         where: { id },
         data: {
           title,
-          date: new Date(date),
+          date: meetingDateTime,
           location: location || '',
           memo: memo || ''
         }
