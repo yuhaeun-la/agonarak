@@ -194,10 +194,18 @@ export default function Meetings() {
   const handleEditMeeting = (meeting: Meeting) => {
     setEditingMeeting(meeting)
     const meetingDate = new Date(meeting.date)
+    
+    // 로컬 시간 기준으로 날짜와 시간 추출
+    const year = meetingDate.getFullYear()
+    const month = String(meetingDate.getMonth() + 1).padStart(2, '0')
+    const day = String(meetingDate.getDate()).padStart(2, '0')
+    const hours = String(meetingDate.getHours()).padStart(2, '0')
+    const minutes = String(meetingDate.getMinutes()).padStart(2, '0')
+    
     setFormData({
       title: meeting.title,
-      date: meetingDate.toISOString().split('T')[0], // YYYY-MM-DD 형식
-      time: meetingDate.toTimeString().slice(0, 5), // HH:MM 형식
+      date: `${year}-${month}-${day}`, // YYYY-MM-DD 형식 (로컬 시간)
+      time: `${hours}:${minutes}`, // HH:MM 형식 (로컬 시간)
       location: meeting.location || '',
       memo: meeting.memo || '',
       attendees: meeting.attendances.map(attendance => attendance.member.id)

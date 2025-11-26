@@ -78,8 +78,8 @@ export async function PUT(
       )
     }
 
-    // 날짜와 시간을 합쳐서 DateTime으로 변환
-    const meetingDateTime = new Date(`${date}T${time}:00`)
+    // 날짜와 시간을 합쳐서 DateTime으로 변환 (로컬 시간으로 처리)
+    const meetingDateTime = new Date(`${date}T${time}:00.000+09:00`)
 
     // 트랜잭션으로 모임 정보 수정 및 참석자 업데이트
     const updatedMeeting = await prisma.$transaction(async (tx) => {
