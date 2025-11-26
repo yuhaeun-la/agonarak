@@ -78,8 +78,12 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // 날짜와 시간을 합쳐서 DateTime으로 변환 (로컬 시간으로 처리)
-    const meetingDateTime = new Date(`${date}T${time}:00.000+09:00`)
+    // 날짜와 시간을 합쳐서 DateTime으로 변환
+    // 한국 시간(KST, UTC+9)을 고려하여 UTC로 저장
+    const [year, month, day] = date.split('-').map(Number)
+    const [hours, minutes] = time.split(':').map(Number)
+    // KST 시간을 UTC로 변환 (9시간 빼기)
+    const meetingDateTime = new Date(Date.UTC(year, month - 1, day, hours - 9, minutes, 0, 0))
 
     // 트랜잭션으로 모임과 참석 정보를 함께 생성
     const result = await prisma.$transaction(async (tx) => {
