@@ -5,7 +5,6 @@ import { useRouter, useParams } from 'next/navigation'
 import { Navbar } from '@/components/layout/navbar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import {
   Table,
@@ -141,12 +140,12 @@ export default function MemberBooksPage() {
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
               <AvatarImage src={member?.avatarUrl || ''} alt={member?.nickname || ''} />
-              <AvatarFallback className="bg-primary/10 text-primary">
+              <AvatarFallback className="bg-muted text-muted-foreground">
                 {member?.nickname?.charAt(0) || '?'}
               </AvatarFallback>
             </Avatar>
             <div>
-              <h1 className="text-xl font-bold text-foreground mb-1">
+              <h1 className="text-xl font-medium text-foreground font-[family-name:var(--font-heading)] mb-1">
                 {member?.nickname}님의 독서 내역
               </h1>
               <p className="text-sm text-muted-foreground">
@@ -170,7 +169,7 @@ export default function MemberBooksPage() {
               <BookOpen className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{uniqueBooks.size}</div>
+              <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{uniqueBooks.size}</div>
               <p className="text-xs text-muted-foreground">책 수 (전체 {books.length}회)</p>
             </CardContent>
           </Card>
@@ -181,7 +180,7 @@ export default function MemberBooksPage() {
               <User className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{topGenres.length > 0 ? topGenres[0][0] : '-'}</div>
+              <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{topGenres.length > 0 ? topGenres[0][0] : '-'}</div>
               <p className="text-xs text-muted-foreground">{topGenres.length > 0 ? `${topGenres[0][1]}권` : '데이터 없음'}</p>
             </CardContent>
           </Card>
@@ -192,7 +191,7 @@ export default function MemberBooksPage() {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{Object.keys(genreStats).length}</div>
+              <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{Object.keys(genreStats).length}</div>
               <p className="text-xs text-muted-foreground">다룬 장르 수</p>
             </CardContent>
           </Card>
@@ -206,11 +205,12 @@ export default function MemberBooksPage() {
               <CardDescription>가장 많이 등록한 장르들입니다.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {topGenres.map(([genre, count], index) => (
-                  <Badge key={genre} variant={index === 0 ? "default" : "secondary"} className="text-sm">
-                    {genre} ({count as number}권)
-                  </Badge>
+              <div className="space-y-2">
+                {topGenres.map(([genre, count]) => (
+                  <div key={genre} className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">{genre}</span>
+                    <span className="text-xs text-muted-foreground">{count as number}권</span>
+                  </div>
                 ))}
               </div>
             </CardContent>
@@ -263,11 +263,9 @@ export default function MemberBooksPage() {
                       <TableCell className="font-medium">{book.title}</TableCell>
                       <TableCell>{book.author}</TableCell>
                       <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {book.genres.map((genre) => (
-                            <Badge key={genre} variant="outline" className="text-xs">{genre}</Badge>
-                          ))}
-                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {book.genres.length > 0 ? book.genres.join(' · ') : '장르 없음'}
+                        </span>
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">{formatDate(book.registeredDate)}</div>

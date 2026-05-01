@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { Navbar } from '@/components/layout/navbar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Calendar,
@@ -123,64 +122,57 @@ export default async function Home() {
       <Navbar />
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6">
-          <h1 className="text-xl font-bold text-foreground">대시보드</h1>
+          <h1 className="text-xl font-medium text-foreground font-[family-name:var(--font-heading)]">대시보드</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             독서 모임 현황을 한눈에 확인하세요
           </p>
         </div>
 
-        {/* 통계 카드 */}
-        <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">전체 멤버</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalMembers}</div>
-              <p className="text-xs text-muted-foreground">활성 멤버 수</p>
-            </CardContent>
-          </Card>
+        {/* 통계 카드 - 하나의 카드 안에서 디바이더로 4등분 */}
+        <Card className="mb-6">
+          <CardContent className="p-0">
+            <div className="grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-border">
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm text-muted-foreground">전체 멤버</p>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{stats.totalMembers}</div>
+                <p className="text-xs text-muted-foreground mt-1">활성 멤버 수</p>
+              </div>
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm text-muted-foreground">예정된 모임</p>
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{stats.upcomingMeetings}</div>
+                <p className="text-xs text-muted-foreground mt-1">다가오는 모임</p>
+              </div>
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm text-muted-foreground">이번 달 책</p>
+                  <BookOpen className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{stats.booksThisMonth}</div>
+                <p className="text-xs text-muted-foreground mt-1">이번 달 추가된 책</p>
+              </div>
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm text-muted-foreground">전체 책</p>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{stats.totalBooks}</div>
+                <p className="text-xs text-muted-foreground mt-1">총 등록된 책</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">예정된 모임</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.upcomingMeetings}</div>
-              <p className="text-xs text-muted-foreground">다가오는 모임</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">이번 달 책</CardTitle>
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.booksThisMonth}</div>
-              <p className="text-xs text-muted-foreground">이번 달 추가된 책</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">전체 책</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalBooks}</div>
-              <p className="text-xs text-muted-foreground">총 등록된 책</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-[1fr_1.6fr]">
           {/* 다가오는 모임 */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 font-medium">
                 <Calendar className="h-5 w-5" />
                 다가오는 모임
               </CardTitle>
@@ -206,8 +198,8 @@ export default async function Home() {
                     return (
                       <div key={meeting.id} className="flex items-center space-x-3 p-3 rounded-lg border">
                         <div className="flex-shrink-0">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                            <Calendar className="h-5 w-5 text-primary" />
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                            <Calendar className="h-5 w-5 text-muted-foreground" />
                           </div>
                         </div>
                         <div className="min-w-0 flex-1">
@@ -246,7 +238,7 @@ export default async function Home() {
           {/* 최근 추가된 책 */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 font-medium">
                 <BookOpen className="h-5 w-5" />
                 최근 추가된 책
               </CardTitle>
@@ -270,8 +262,8 @@ export default async function Home() {
                   {recentBooks.map((book) => (
                     <div key={book.id} className="flex items-center space-x-3 p-3 rounded-lg border">
                       <div className="flex-shrink-0">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                          <BookOpen className="h-5 w-5 text-primary" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                          <BookOpen className="h-5 w-5 text-muted-foreground" />
                         </div>
                       </div>
                       <div className="min-w-0 flex-1">
@@ -281,23 +273,16 @@ export default async function Home() {
                         </div>
                         <p className="text-sm text-muted-foreground">{book.author}</p>
                         <div className="flex items-center justify-between mt-1">
-                          <div className="flex flex-wrap gap-1">
-                            {book.genres.slice(0, 2).map((genre) => (
-                              <Badge key={genre} variant="outline" className="text-xs">{genre}</Badge>
-                            ))}
-                            {book.genres.length > 2 && (
-                              <Badge variant="outline" className="text-xs">+{book.genres.length - 2}</Badge>
-                            )}
-                          </div>
-                          <div className="flex items-center text-xs text-muted-foreground">
-                            <Avatar className="h-4 w-4 mr-1">
-                              <AvatarImage src={book.addedByAvatarUrl || ''} alt={book.addedBy} />
-                              <AvatarFallback className="bg-primary/10 text-primary text-[8px]">
-                                {book.addedBy.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
-                            {book.addedBy}
-                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {book.genres.slice(0, 2).join(' · ')}
+                            {book.genres.length > 2 && ` +${book.genres.length - 2}`}
+                          </p>
+                          <Avatar className="h-4 w-4" title={book.addedBy}>
+                            <AvatarImage src={book.addedByAvatarUrl || ''} alt={book.addedBy} />
+                            <AvatarFallback className="bg-muted text-muted-foreground text-[8px]">
+                              {book.addedBy.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
                         </div>
                       </div>
                     </div>
@@ -316,7 +301,7 @@ export default async function Home() {
         {/* 빠른 액션 */}
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>빠른 시작</CardTitle>
+            <CardTitle className="font-medium">빠른 시작</CardTitle>
             <CardDescription>자주 사용하는 기능들에 빠르게 접근하세요</CardDescription>
           </CardHeader>
           <CardContent>

@@ -215,7 +215,7 @@ export default function Members() {
 
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
-          <h1 className="text-xl font-bold text-foreground mb-1">멤버 관리</h1>
+          <h1 className="text-xl font-medium text-foreground font-[family-name:var(--font-heading)] mb-1">멤버 관리</h1>
           <p className="text-sm text-muted-foreground">아고나락 멤버들을 관리하고 정보를 확인하세요.</p>
         </div>
 
@@ -233,7 +233,7 @@ export default function Members() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{members.length}</div>
+              <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{members.length}</div>
               <p className="text-xs text-muted-foreground">활성 멤버 수</p>
             </CardContent>
           </Card>
@@ -244,7 +244,7 @@ export default function Members() {
               <UserPlus className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{members.filter(m => m.role === 'LEADER').length}</div>
+              <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{members.filter(m => m.role === 'LEADER').length}</div>
               <p className="text-xs text-muted-foreground">리더 역할 멤버</p>
             </CardContent>
           </Card>
@@ -255,7 +255,7 @@ export default function Members() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{members.filter(m => m.role === 'MEMBER').length}</div>
+              <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{members.filter(m => m.role === 'MEMBER').length}</div>
               <p className="text-xs text-muted-foreground">일반 멤버</p>
             </CardContent>
           </Card>
@@ -290,7 +290,7 @@ export default function Members() {
                   <div className="col-span-3 flex items-center gap-3">
                     <Avatar className="h-12 w-12">
                       <AvatarImage src={avatarPreview || ''} alt="미리보기" />
-                      <AvatarFallback className="bg-primary/10 text-primary">
+                      <AvatarFallback className="bg-muted text-muted-foreground">
                         {formData.nickname ? formData.nickname.charAt(0) : '?'}
                       </AvatarFallback>
                     </Avatar>
@@ -379,7 +379,7 @@ export default function Members() {
                         <div className="flex items-center space-x-3">
                           <Avatar className="h-8 w-8">
                             <AvatarImage src={member.avatarUrl || ''} alt={member.nickname} />
-                            <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                            <AvatarFallback className="bg-muted text-muted-foreground text-sm">
                               {member.nickname.charAt(0)}
                             </AvatarFallback>
                           </Avatar>
@@ -450,7 +450,7 @@ export default function Members() {
                 <div className="col-span-3 flex items-center gap-3">
                   <Avatar className="h-12 w-12">
                     <AvatarImage src={avatarPreview || ''} alt="미리보기" />
-                    <AvatarFallback className="bg-primary/10 text-primary">
+                    <AvatarFallback className="bg-muted text-muted-foreground">
                       {formData.nickname ? formData.nickname.charAt(0) : '?'}
                     </AvatarFallback>
                   </Avatar>

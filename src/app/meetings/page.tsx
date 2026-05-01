@@ -258,7 +258,7 @@ export default function Meetings() {
 
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
-          <h1 className="text-xl font-bold text-foreground mb-1">모임 일정</h1>
+          <h1 className="text-xl font-medium text-foreground font-[family-name:var(--font-heading)] mb-1">모임 일정</h1>
           <p className="text-sm text-muted-foreground">아고나락 모임 일정을 관리하고 참석 현황을 확인하세요.</p>
         </div>
 
@@ -276,7 +276,7 @@ export default function Meetings() {
               <CalendarDays className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{meetings.length}</div>
+              <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{meetings.length}</div>
               <p className="text-xs text-muted-foreground">총 모임 수</p>
             </CardContent>
           </Card>
@@ -287,7 +287,7 @@ export default function Meetings() {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{upcomingMeetings.length}</div>
+              <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{upcomingMeetings.length}</div>
               <p className="text-xs text-muted-foreground">다가오는 모임</p>
             </CardContent>
           </Card>
@@ -298,7 +298,7 @@ export default function Meetings() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{pastMeetings.length}</div>
+              <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{pastMeetings.length}</div>
               <p className="text-xs text-muted-foreground">완료된 모임</p>
             </CardContent>
           </Card>
@@ -426,7 +426,7 @@ export default function Meetings() {
                               {meeting.attendances.filter(a => a.status === 'ATTENDING').slice(0, 3).map((attendance) => (
                                 <Avatar key={attendance.member.id} className="h-6 w-6" title={attendance.member.nickname}>
                                   <AvatarImage src={attendance.member.avatarUrl || ''} alt={attendance.member.nickname} />
-                                  <AvatarFallback className="bg-primary/10 text-primary text-[10px]">{attendance.member.nickname.charAt(0)}</AvatarFallback>
+                                  <AvatarFallback className="bg-muted text-muted-foreground text-[10px]">{attendance.member.nickname.charAt(0)}</AvatarFallback>
                                 </Avatar>
                               ))}
                               {meeting.attendances.filter(a => a.status === 'ATTENDING').length > 3 && (
@@ -532,7 +532,7 @@ export default function Meetings() {
                               {meeting.attendances.filter(a => a.status === 'ATTENDING').slice(0, 4).map((attendance) => (
                                 <Avatar key={attendance.member.id} className="h-6 w-6" title={attendance.member.nickname}>
                                   <AvatarImage src={attendance.member.avatarUrl || ''} alt={attendance.member.nickname} />
-                                  <AvatarFallback className="bg-primary/10 text-primary text-[10px]">{attendance.member.nickname.charAt(0)}</AvatarFallback>
+                                  <AvatarFallback className="bg-muted text-muted-foreground text-[10px]">{attendance.member.nickname.charAt(0)}</AvatarFallback>
                                 </Avatar>
                               ))}
                               {meeting.attendances.filter(a => a.status === 'ATTENDING').length > 4 && (

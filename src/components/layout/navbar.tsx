@@ -23,7 +23,7 @@ export function Navbar() {
           <div className="flex h-14 justify-between">
             <div className="flex">
               <div className="flex flex-shrink-0 items-center">
-                <Link href="/" className="text-xl font-bold text-primary">
+                <Link href="/" className="text-xl font-normal text-foreground font-[family-name:var(--font-heading)]">
                   아고나락
                 </Link>
               </div>
@@ -37,7 +37,7 @@ export function Navbar() {
                       className={cn(
                         "inline-flex items-center px-1 pt-1 text-sm border-b-2",
                         isActive
-                          ? "border-primary text-foreground font-medium"
+                          ? "border-foreground text-foreground font-medium"
                           : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
                       )}
                     >
@@ -64,7 +64,7 @@ export function Navbar() {
                 className={cn(
                   "flex flex-col items-center justify-center flex-1 h-full text-xs gap-0.5",
                   isActive
-                    ? "text-primary"
+                    ? "text-foreground"
                     : "text-muted-foreground"
                 )}
               >

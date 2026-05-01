@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Navbar } from '@/components/layout/navbar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -429,7 +428,7 @@ export default function Books() {
 
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
-          <h1 className="text-xl font-bold text-foreground mb-1">책 관리</h1>
+          <h1 className="text-xl font-medium text-foreground font-[family-name:var(--font-heading)] mb-1">책 관리</h1>
           <p className="text-sm text-muted-foreground">아고나락에서 읽은 책들을 관리하고 기록을 남기세요.</p>
         </div>
 
@@ -448,7 +447,7 @@ export default function Books() {
         <>
         {/* 멤버별 장르 통계 */}
         <div className="mb-6">
-          <h2 className="text-sm font-bold mb-3">멤버별 장르 통계</h2>
+          <h2 className="text-sm font-medium mb-3">멤버별 장르 통계</h2>
           {memberGenreStats.length === 0 ? (
             <Card>
               <CardContent className="text-center py-8">
@@ -472,14 +471,14 @@ export default function Books() {
                 return (
                   <Card
                     key={memberStat.member}
-                    className="cursor-pointer hover:border-primary/50 transition-colors"
+                    className="cursor-pointer hover:border-muted-foreground/30 transition-colors"
                     onClick={() => member && router.push(`/members/${member.id}/books`)}
                   >
                     <CardHeader>
                       <CardTitle className="text-sm flex items-center gap-2">
                         <Avatar className="h-7 w-7">
                           <AvatarImage src={member?.avatarUrl || ''} alt={memberStat.member} />
-                          <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                          <AvatarFallback className="bg-muted text-muted-foreground text-xs">
                             {memberStat.member.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
@@ -494,7 +493,7 @@ export default function Books() {
                           memberStat.genres.slice(0, 3).map((genreStat) => (
                             <div key={genreStat.genre} className="flex justify-between items-center">
                               <span className="text-sm text-muted-foreground truncate flex-1 mr-2">{genreStat.genre}</span>
-                              <Badge variant="outline">{genreStat.count}권</Badge>
+                              <span className="text-xs text-muted-foreground">{genreStat.count}권</span>
                             </div>
                           ))
                         ) : (
@@ -667,27 +666,23 @@ export default function Books() {
                 <TableBody>
                   {filteredBooks.map((book) => (
                     <TableRow key={book.id}>
-                      <TableCell className="font-medium">
+                      <TableCell>
                         <div>
                           <div className="font-medium">{book.title}</div>
                           <div className="text-sm text-muted-foreground">{book.author}</div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {book.genres && book.genres.length > 0 ? (
-                            book.genres.map((genre) => (
-                              <Badge key={genre} variant="outline" className="text-xs">{genre}</Badge>
-                            ))
-                          ) : (
-                            <span className="text-sm text-muted-foreground">장르 없음</span>
-                          )}
-                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {book.genres && book.genres.length > 0
+                            ? book.genres.join(' · ')
+                            : '장르 없음'}
+                        </span>
                       </TableCell>
                       <TableCell>
                         <Avatar className="h-6 w-6" title={book.addedBy}>
                           <AvatarImage src={book.addedByAvatarUrl || ''} alt={book.addedBy} />
-                          <AvatarFallback className="bg-primary/10 text-primary text-[10px]">
+                          <AvatarFallback className="bg-muted text-muted-foreground text-[10px]">
                             {book.addedBy.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
