@@ -50,19 +50,15 @@ export default function MemberBooksPage() {
     if (memberId) {
       Promise.all([fetchMember(), fetchMemberBooks()])
     }
-  }, [memberId]) // fetchMember와 fetchMemberBooks는 매번 새로 생성되므로 의존성에서 제외
+  }, [memberId])
 
   const fetchMember = async () => {
     try {
       const response = await fetch('/api/members')
-      if (!response.ok) {
-        throw new Error('Failed to fetch members')
-      }
+      if (!response.ok) throw new Error('Failed to fetch members')
       const members = await response.json()
       const foundMember = members.find((m: Member) => m.id === memberId)
-      if (!foundMember) {
-        throw new Error('Member not found')
-      }
+      if (!foundMember) throw new Error('Member not found')
       setMember(foundMember)
     } catch (error) {
       console.error('Error fetching member:', error)
@@ -74,16 +70,9 @@ export default function MemberBooksPage() {
     try {
       setLoading(true)
       const response = await fetch('/api/books')
-      if (!response.ok) {
-        throw new Error('Failed to fetch books')
-      }
+      if (!response.ok) throw new Error('Failed to fetch books')
       const allBooks = await response.json()
-      
-      // 해당 멤버가 추가한 책들만 필터링
-      const memberBooks = allBooks.filter((book: Book) => 
-        book.addedById === memberId
-      )
-      
+      const memberBooks = allBooks.filter((book: Book) => book.addedById === memberId)
       setBooks(memberBooks)
       setError('')
     } catch (error) {
@@ -104,7 +93,6 @@ export default function MemberBooksPage() {
     return new Date(dateString).toLocaleDateString('ko-KR')
   }
 
-  // 고유한 책들과 장르별 통계 계산
   const uniqueBooks = new Map()
   books.forEach(book => {
     const bookKey = `${book.title}-${book.author}`
@@ -126,11 +114,11 @@ export default function MemberBooksPage() {
 
   if (loading && !member) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Navbar />
         <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="text-center py-12">
-            <div className="text-gray-500">데이터를 불러오는 중...</div>
+            <div className="text-muted-foreground">데이터를 불러오는 중...</div>
           </div>
         </main>
       </div>
@@ -138,38 +126,32 @@ export default function MemberBooksPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background pb-16 sm:pb-0">
       <Navbar />
-      
+
       <div className="container mx-auto px-4 py-8">
-        {/* 헤더 */}
-        <div className="mb-8">
-          <Button
-            variant="outline"
-            onClick={() => router.push('/books')}
-            className="mb-4"
-          >
+        <div className="mb-6">
+          <Button variant="outline" onClick={() => router.push('/books')} className="mb-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
             책 관리로 돌아가기
           </Button>
-          
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+
+          <h1 className="text-xl font-bold text-foreground mb-1">
             {member?.nickname}님의 독서 내역
           </h1>
-          <p className="text-gray-600">
+          <p className="text-sm text-muted-foreground">
             총 {uniqueBooks.size}권의 책을 읽었습니다. (전체 등록 {books.length}회)
           </p>
         </div>
 
-        {/* 에러 메시지 */}
         {error && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded text-sm text-destructive">
             {error}
           </div>
         )}
 
         {/* 통계 카드 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">총 등록 도서</CardTitle>
@@ -177,27 +159,21 @@ export default function MemberBooksPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{uniqueBooks.size}</div>
-              <p className="text-xs text-muted-foreground">
-                책 수 (전체 {books.length}회)
-              </p>
+              <p className="text-xs text-muted-foreground">책 수 (전체 {books.length}회)</p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">선호 장르</CardTitle>
               <User className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {topGenres.length > 0 ? topGenres[0][0] : '-'}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {topGenres.length > 0 ? `${topGenres[0][1]}권` : '데이터 없음'}
-              </p>
+              <div className="text-2xl font-bold">{topGenres.length > 0 ? topGenres[0][0] : '-'}</div>
+              <p className="text-xs text-muted-foreground">{topGenres.length > 0 ? `${topGenres[0][1]}권` : '데이터 없음'}</p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">장르 다양성</CardTitle>
@@ -205,30 +181,22 @@ export default function MemberBooksPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{Object.keys(genreStats).length}</div>
-              <p className="text-xs text-muted-foreground">
-                다룬 장르 수
-              </p>
+              <p className="text-xs text-muted-foreground">다룬 장르 수</p>
             </CardContent>
           </Card>
         </div>
 
         {/* 장르별 통계 */}
         {topGenres.length > 0 && (
-          <Card className="mb-8">
+          <Card className="mb-6">
             <CardHeader>
               <CardTitle>선호 장르 TOP 5</CardTitle>
-              <CardDescription>
-                가장 많이 등록한 장르들입니다.
-              </CardDescription>
+              <CardDescription>가장 많이 등록한 장르들입니다.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
                 {topGenres.map(([genre, count], index) => (
-                  <Badge 
-                    key={genre} 
-                    variant={index === 0 ? "default" : "secondary"}
-                    className="text-sm"
-                  >
+                  <Badge key={genre} variant={index === 0 ? "default" : "secondary"} className="text-sm">
                     {genre} ({count as number}권)
                   </Badge>
                 ))}
@@ -240,13 +208,8 @@ export default function MemberBooksPage() {
         {/* 검색 */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="책 제목, 저자, 장르로 검색..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input placeholder="책 제목, 저자, 장르로 검색..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
           </div>
         </div>
 
@@ -254,22 +217,20 @@ export default function MemberBooksPage() {
         <Card>
           <CardHeader>
             <CardTitle>등록한 책 목록</CardTitle>
-            <CardDescription>
-              현재 {filteredBooks.length}권의 책이 표시되고 있습니다.
-            </CardDescription>
+            <CardDescription>현재 {filteredBooks.length}권의 책이 표시되고 있습니다.</CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
               <div className="text-center py-8">
-                <div className="text-gray-500">책 데이터를 불러오는 중...</div>
+                <div className="text-muted-foreground">책 데이터를 불러오는 중...</div>
               </div>
             ) : filteredBooks.length === 0 ? (
               <div className="text-center py-8">
-                <BookOpen className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                <BookOpen className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+                <h3 className="text-sm font-medium text-foreground mb-2">
                   {searchTerm ? '검색 결과가 없습니다' : '등록한 책이 없습니다'}
                 </h3>
-                <p className="text-gray-500">
+                <p className="text-sm text-muted-foreground">
                   {searchTerm ? '다른 검색어로 시도해보세요.' : '아직 등록한 책이 없습니다.'}
                 </p>
               </div>
@@ -287,31 +248,23 @@ export default function MemberBooksPage() {
                 <TableBody>
                   {filteredBooks.map((book) => (
                     <TableRow key={book.id}>
-                      <TableCell className="font-medium">
-                        {book.title}
-                      </TableCell>
+                      <TableCell className="font-medium">{book.title}</TableCell>
                       <TableCell>{book.author}</TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {book.genres.map((genre) => (
-                            <Badge key={genre} variant="outline" className="text-xs">
-                              {genre}
-                            </Badge>
+                            <Badge key={genre} variant="outline" className="text-xs">{genre}</Badge>
                           ))}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm">
-                          {formatDate(book.registeredDate)}
-                        </div>
+                        <div className="text-sm">{formatDate(book.registeredDate)}</div>
                       </TableCell>
                       <TableCell>
                         {book.notes ? (
-                          <div className="text-sm text-gray-600 max-w-xs truncate">
-                            {book.notes}
-                          </div>
+                          <div className="text-sm text-muted-foreground max-w-xs truncate">{book.notes}</div>
                         ) : (
-                          <span className="text-sm text-gray-400">메모 없음</span>
+                          <span className="text-sm text-muted-foreground">메모 없음</span>
                         )}
                       </TableCell>
                     </TableRow>
