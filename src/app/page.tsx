@@ -14,71 +14,82 @@ import {
 } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
 
+const emptyData = {
+  stats: { totalMembers: 0, upcomingMeetings: 0, booksThisMonth: 0, totalBooks: 0 },
+  upcomingMeetings: [] as Array<{ id: string; date: string; location: string; memo: string; books: Array<{ id: string; title: string; author: string }> }>,
+  recentBooks: [] as Array<{ id: string; title: string; author: string; genres: string[]; addedBy: string; createdAt: string }>
+}
+
 async function getDashboardData() {
-  const now = new Date()
-  const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+  try {
+    const now = new Date()
+    const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
 
-  const [members, meetings, books] = await Promise.all([
-    prisma.member.findMany({ select: { id: true } }),
-    prisma.meeting.findMany({
-      where: { date: { gte: now } },
-      include: {
-        books: {
-          include: {
-            book: { select: { id: true, title: true, author: true } }
+    const [members, meetings, books] = await Promise.all([
+      prisma.member.findMany({ select: { id: true } }),
+      prisma.meeting.findMany({
+        where: { date: { gte: now } },
+        include: {
+          books: {
+            include: {
+              book: { select: { id: true, title: true, author: true } }
+            }
           }
-        }
-      },
-      orderBy: { date: 'asc' },
-      take: 3
-    }),
-    prisma.book.findMany({
-      include: {
-        addedBy: { select: { nickname: true } },
-        genres: { include: { genre: { select: { name: true } } } }
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 20
+        },
+        orderBy: { date: 'asc' },
+        take: 3
+      }),
+      prisma.book.findMany({
+        include: {
+          addedBy: { select: { nickname: true } },
+          genres: { include: { genre: { select: { name: true } } } }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 20
+      })
+    ])
+
+    const uniqueBooks = new Set<string>()
+    const uniqueBooksThisMonth = new Set<string>()
+
+    books.forEach((book) => {
+      const bookKey = `${book.title}-${book.author}`
+      uniqueBooks.add(bookKey)
+      if (book.createdAt >= thisMonth) {
+        uniqueBooksThisMonth.add(bookKey)
+      }
     })
-  ])
 
-  const uniqueBooks = new Set<string>()
-  const uniqueBooksThisMonth = new Set<string>()
+    const upcomingMeetings = meetings.map((m) => ({
+      id: m.id,
+      date: m.date.toISOString(),
+      location: m.location || '',
+      memo: m.memo || '',
+      books: m.books.map((mb) => mb.book)
+    }))
 
-  books.forEach((book) => {
-    const bookKey = `${book.title}-${book.author}`
-    uniqueBooks.add(bookKey)
-    if (book.createdAt >= thisMonth) {
-      uniqueBooksThisMonth.add(bookKey)
+    const recentBooks = books.slice(0, 5).map((b) => ({
+      id: b.id,
+      title: b.title,
+      author: b.author,
+      genres: b.genres.map((bg) => bg.genre.name),
+      addedBy: b.addedBy?.nickname || 'Unknown',
+      createdAt: b.createdAt.toISOString()
+    }))
+
+    return {
+      stats: {
+        totalMembers: members.length,
+        upcomingMeetings: upcomingMeetings.length,
+        booksThisMonth: uniqueBooksThisMonth.size,
+        totalBooks: uniqueBooks.size
+      },
+      upcomingMeetings,
+      recentBooks
     }
-  })
-
-  const upcomingMeetings = meetings.map((m) => ({
-    id: m.id,
-    date: m.date.toISOString(),
-    location: m.location || '',
-    memo: m.memo || '',
-    books: m.books.map((mb) => mb.book)
-  }))
-
-  const recentBooks = books.slice(0, 5).map((b) => ({
-    id: b.id,
-    title: b.title,
-    author: b.author,
-    genres: b.genres.map((bg) => bg.genre.name),
-    addedBy: b.addedBy?.nickname || 'Unknown',
-    createdAt: b.createdAt.toISOString()
-  }))
-
-  return {
-    stats: {
-      totalMembers: members.length,
-      upcomingMeetings: upcomingMeetings.length,
-      booksThisMonth: uniqueBooksThisMonth.size,
-      totalBooks: uniqueBooks.size
-    },
-    upcomingMeetings,
-    recentBooks
+  } catch (error) {
+    console.error('Failed to fetch dashboard data:', error)
+    return emptyData
   }
 }
 
