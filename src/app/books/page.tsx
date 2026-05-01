@@ -476,14 +476,13 @@ export default function Books() {
                     onClick={() => member && router.push(`/members/${member.id}/books`)}
                   >
                     <CardHeader>
-                      <CardTitle className="text-sm flex items-center">
-                        <Avatar className="h-5 w-5 mr-2">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <Avatar className="h-7 w-7">
                           <AvatarImage src={member?.avatarUrl || ''} alt={memberStat.member} />
-                          <AvatarFallback className="bg-primary/10 text-primary text-[10px]">
+                          <AvatarFallback className="bg-primary/10 text-primary text-xs">
                             {memberStat.member.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
-                        {memberStat.member}
                       </CardTitle>
                       <CardDescription className="text-xs">
                         총 {memberStat.totalBooks}권 추가
@@ -686,15 +685,12 @@ export default function Books() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Avatar className="h-5 w-5 mr-1">
-                            <AvatarImage src={book.addedByAvatarUrl || ''} alt={book.addedBy} />
-                            <AvatarFallback className="bg-primary/10 text-primary text-[10px]">
-                              {book.addedBy.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          {book.addedBy}
-                        </div>
+                        <Avatar className="h-6 w-6" title={book.addedBy}>
+                          <AvatarImage src={book.addedByAvatarUrl || ''} alt={book.addedBy} />
+                          <AvatarFallback className="bg-primary/10 text-primary text-[10px]">
+                            {book.addedBy.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center text-sm text-muted-foreground">
