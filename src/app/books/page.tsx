@@ -372,8 +372,8 @@ export default function Books() {
     }
   }).filter(stat => stat.totalBooks > 0)
 
-  // 책 검색 입력 + 드롭다운 컴포넌트
-  const BookSearchInput = ({ id }: { id: string }) => (
+  // 책 검색 입력 + 드롭다운 (인라인 렌더링용)
+  const renderBookSearchInput = (id: string) => (
     <div ref={searchContainerRef} className="col-span-3 relative">
       <div className="relative">
         <Input
@@ -436,6 +436,13 @@ export default function Books() {
           </div>
         )}
 
+        {loading ? (
+          <div className="text-center py-16">
+            <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted-foreground mb-4" />
+            <p className="text-sm text-muted-foreground">데이터를 불러오는 중...</p>
+          </div>
+        ) : (
+        <>
         {/* 멤버별 장르 통계 */}
         <div className="mb-6">
           <h2 className="text-sm font-bold mb-3">멤버별 장르 통계</h2>
@@ -540,7 +547,7 @@ export default function Books() {
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="title" className="text-right">제목 *</Label>
-                    <BookSearchInput id="title" />
+                    {renderBookSearchInput("title")}
                   </div>
 
                   <div className="grid grid-cols-4 items-center gap-4">
@@ -613,11 +620,7 @@ export default function Books() {
             <CardDescription>현재 {filteredBooks.length}권의 책이 등록되어 있습니다.</CardDescription>
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <div className="text-center py-8">
-                <div className="text-muted-foreground">책 데이터를 불러오는 중...</div>
-              </div>
-            ) : filteredBooks.length === 0 ? (
+            {filteredBooks.length === 0 ? (
               <div className="text-center py-8">
                 <BookOpen className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
                 <h3 className="text-sm font-medium text-foreground mb-2">
@@ -713,6 +716,9 @@ export default function Books() {
           </CardContent>
         </Card>
 
+        </>
+        )}
+
         {/* 수정 다이얼로그 */}
         <Dialog open={isEditDialogOpen} onOpenChange={(open) => { setIsEditDialogOpen(open); if (!open) resetForm() }}>
           <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
@@ -724,7 +730,7 @@ export default function Books() {
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="edit-title" className="text-right">제목 *</Label>
-                <BookSearchInput id="edit-title" />
+                {renderBookSearchInput("edit-title")}
               </div>
 
               <div className="grid grid-cols-4 items-center gap-4">
