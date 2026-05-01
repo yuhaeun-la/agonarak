@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { BookOpen, Plus, Search, Filter, User, Calendar, BookMarked, Edit, Trash2, Loader2 } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useRouter } from 'next/navigation'
 
 interface Book {
@@ -44,6 +45,7 @@ interface Book {
   notes: string
   registeredDate: string
   addedBy: string
+  addedByAvatarUrl: string | null
   addedById: string
   createdAt: string
 }
@@ -51,6 +53,7 @@ interface Book {
 interface Member {
   id: string
   nickname: string
+  avatarUrl: string | null
 }
 
 interface SearchResult {
@@ -474,7 +477,12 @@ export default function Books() {
                   >
                     <CardHeader>
                       <CardTitle className="text-sm flex items-center">
-                        <User className="h-4 w-4 mr-2" />
+                        <Avatar className="h-5 w-5 mr-2">
+                          <AvatarImage src={member?.avatarUrl || ''} alt={memberStat.member} />
+                          <AvatarFallback className="bg-primary/10 text-primary text-[10px]">
+                            {memberStat.member.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
                         {memberStat.member}
                       </CardTitle>
                       <CardDescription className="text-xs">
@@ -679,7 +687,12 @@ export default function Books() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center text-sm text-muted-foreground">
-                          <User className="h-3 w-3 mr-1" />
+                          <Avatar className="h-5 w-5 mr-1">
+                            <AvatarImage src={book.addedByAvatarUrl || ''} alt={book.addedBy} />
+                            <AvatarFallback className="bg-primary/10 text-primary text-[10px]">
+                              {book.addedBy.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
                           {book.addedBy}
                         </div>
                       </TableCell>

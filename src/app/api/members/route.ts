@@ -64,7 +64,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { nickname, role, contact } = body
+    const { nickname, role, contact, avatarUrl } = body
 
     // 입력 검증
     if (!nickname) {
@@ -91,6 +91,7 @@ export async function POST(request: NextRequest) {
         nickname,
         role: role || 'MEMBER',
         contact: contact || '',
+        avatarUrl: avatarUrl || null,
         clubId: club.id
       }
     })

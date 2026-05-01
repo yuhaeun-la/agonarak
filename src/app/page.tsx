@@ -10,14 +10,14 @@ import {
   TrendingUp,
   Clock,
   MapPin,
-  User
 } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { prisma } from '@/lib/prisma'
 
 const emptyData = {
   stats: { totalMembers: 0, upcomingMeetings: 0, booksThisMonth: 0, totalBooks: 0 },
   upcomingMeetings: [] as Array<{ id: string; date: string; location: string; memo: string; books: Array<{ id: string; title: string; author: string }> }>,
-  recentBooks: [] as Array<{ id: string; title: string; author: string; genres: string[]; addedBy: string; createdAt: string }>
+  recentBooks: [] as Array<{ id: string; title: string; author: string; genres: string[]; addedBy: string; addedByAvatarUrl: string | null; createdAt: string }>
 }
 
 async function getDashboardData() {
@@ -41,7 +41,7 @@ async function getDashboardData() {
       }),
       prisma.book.findMany({
         include: {
-          addedBy: { select: { nickname: true } },
+          addedBy: { select: { nickname: true, avatarUrl: true } },
           genres: { include: { genre: { select: { name: true } } } }
         },
         orderBy: { createdAt: 'desc' },
@@ -74,6 +74,7 @@ async function getDashboardData() {
       author: b.author,
       genres: b.genres.map((bg) => bg.genre.name),
       addedBy: b.addedBy?.nickname || 'Unknown',
+      addedByAvatarUrl: b.addedBy?.avatarUrl || null,
       createdAt: b.createdAt.toISOString()
     }))
 
@@ -289,7 +290,12 @@ export default async function Home() {
                             )}
                           </div>
                           <div className="flex items-center text-xs text-muted-foreground">
-                            <User className="h-3 w-3 mr-1" />
+                            <Avatar className="h-4 w-4 mr-1">
+                              <AvatarImage src={book.addedByAvatarUrl || ''} alt={book.addedBy} />
+                              <AvatarFallback className="bg-primary/10 text-primary text-[8px]">
+                                {book.addedBy.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
                             {book.addedBy}
                           </div>
                         </div>

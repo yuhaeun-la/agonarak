@@ -10,7 +10,8 @@ export async function GET() {
         addedBy: {
           select: {
             id: true,
-            nickname: true
+            nickname: true,
+            avatarUrl: true
           }
         },
         genres: {
@@ -28,7 +29,8 @@ export async function GET() {
     const transformedBooks = books.map((book: any) => ({
       ...book,
       genres: book.genres?.map((bg: any) => bg.genre.name) || [],
-      addedBy: book.addedBy?.nickname || 'Unknown'
+      addedBy: book.addedBy?.nickname || 'Unknown',
+      addedByAvatarUrl: book.addedBy?.avatarUrl || null
     }))
     
     return NextResponse.json(transformedBooks)
@@ -120,7 +122,8 @@ export async function POST(request: NextRequest) {
         addedBy: {
           select: {
             id: true,
-            nickname: true
+            nickname: true,
+            avatarUrl: true
           }
         },
         genres: {
@@ -139,7 +142,8 @@ export async function POST(request: NextRequest) {
     const transformedBook = {
       ...(createdBook as any),
       genres: (createdBook as any).genres?.map((bg: any) => bg.genre.name) || [],
-      addedBy: (createdBook as any).addedBy?.nickname || 'Unknown'
+      addedBy: (createdBook as any).addedBy?.nickname || 'Unknown',
+      addedByAvatarUrl: (createdBook as any).addedBy?.avatarUrl || null
     }
 
     return NextResponse.json(transformedBook, { status: 201 })

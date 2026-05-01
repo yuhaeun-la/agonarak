@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/table'
 import { Label } from '@/components/ui/label'
 import { CalendarDays, MapPin, Clock, Plus, Search, Users, Calendar, Trash2, Edit } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 interface Meeting {
   id: string
@@ -43,6 +44,7 @@ interface Meeting {
     member: {
       id: string
       nickname: string
+      avatarUrl: string | null
     }
     status: 'ATTENDING' | 'NOT_ATTENDING' | 'UNDECIDED'
   }>
@@ -422,7 +424,13 @@ export default function Meetings() {
                           {meeting.attendances.length > 0 ? (
                             <div className="flex flex-wrap gap-1">
                               {meeting.attendances.filter(a => a.status === 'ATTENDING').slice(0, 3).map((attendance) => (
-                                <Badge key={attendance.member.id} variant="secondary" className="text-xs">{attendance.member.nickname}</Badge>
+                                <Badge key={attendance.member.id} variant="secondary" className="text-xs flex items-center gap-1">
+                                  <Avatar className="h-4 w-4">
+                                    <AvatarImage src={attendance.member.avatarUrl || ''} alt={attendance.member.nickname} />
+                                    <AvatarFallback className="bg-primary/10 text-primary text-[8px]">{attendance.member.nickname.charAt(0)}</AvatarFallback>
+                                  </Avatar>
+                                  {attendance.member.nickname}
+                                </Badge>
                               ))}
                               {meeting.attendances.filter(a => a.status === 'ATTENDING').length > 3 && (
                                 <Badge variant="outline" className="text-xs">+{meeting.attendances.filter(a => a.status === 'ATTENDING').length - 3}</Badge>
@@ -525,7 +533,13 @@ export default function Meetings() {
                           {meeting.attendances.length > 0 ? (
                             <div className="flex flex-wrap gap-1">
                               {meeting.attendances.filter(a => a.status === 'ATTENDING').slice(0, 4).map((attendance) => (
-                                <Badge key={attendance.member.id} variant="secondary" className="text-xs">{attendance.member.nickname}</Badge>
+                                <Badge key={attendance.member.id} variant="secondary" className="text-xs flex items-center gap-1">
+                                  <Avatar className="h-4 w-4">
+                                    <AvatarImage src={attendance.member.avatarUrl || ''} alt={attendance.member.nickname} />
+                                    <AvatarFallback className="bg-primary/10 text-primary text-[8px]">{attendance.member.nickname.charAt(0)}</AvatarFallback>
+                                  </Avatar>
+                                  {attendance.member.nickname}
+                                </Badge>
                               ))}
                               {meeting.attendances.filter(a => a.status === 'ATTENDING').length > 4 && (
                                 <Badge variant="outline" className="text-xs">+{meeting.attendances.filter(a => a.status === 'ATTENDING').length - 4}</Badge>

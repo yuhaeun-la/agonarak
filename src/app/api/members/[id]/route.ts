@@ -8,7 +8,7 @@ export async function PUT(
 ) {
   try {
     const body = await request.json()
-    const { nickname, role, contact } = body
+    const { nickname, role, contact, avatarUrl } = body
     const { id } = await params
 
     // 입력 검증
@@ -24,7 +24,8 @@ export async function PUT(
       data: {
         nickname,
         role: role || 'MEMBER',
-        contact: contact || ''
+        contact: contact || '',
+        avatarUrl: avatarUrl !== undefined ? (avatarUrl || null) : undefined
       }
     })
 

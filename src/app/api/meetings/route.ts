@@ -22,7 +22,8 @@ export async function GET() {
             member: {
               select: {
                 id: true,
-                nickname: true
+                nickname: true,
+                avatarUrl: true
               }
             }
           }
@@ -134,7 +135,8 @@ export async function POST(request: NextRequest) {
             member: {
               select: {
                 id: true,
-                nickname: true
+                nickname: true,
+                avatarUrl: true
               }
             }
           }

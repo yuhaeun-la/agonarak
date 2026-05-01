@@ -23,6 +23,7 @@ model Member {
   id           String        @id @default(cuid())
   nickname     String
   contact      String?
+  avatarUrl    String?
   isActive     Boolean       @default(true)
   clubId       String
   role         MemberRole    @default(MEMBER)

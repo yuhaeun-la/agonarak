@@ -16,6 +16,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { ArrowLeft, BookOpen, Search, Calendar, User } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 interface Book {
   id: string
@@ -33,6 +34,7 @@ interface Member {
   nickname: string
   role: 'LEADER' | 'MEMBER'
   contact: string
+  avatarUrl: string | null
 }
 
 export default function MemberBooksPage() {
@@ -136,12 +138,22 @@ export default function MemberBooksPage() {
             책 관리로 돌아가기
           </Button>
 
-          <h1 className="text-xl font-bold text-foreground mb-1">
-            {member?.nickname}님의 독서 내역
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            총 {uniqueBooks.size}권의 책을 읽었습니다. (전체 등록 {books.length}회)
-          </p>
+          <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={member?.avatarUrl || ''} alt={member?.nickname || ''} />
+              <AvatarFallback className="bg-primary/10 text-primary">
+                {member?.nickname?.charAt(0) || '?'}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h1 className="text-xl font-bold text-foreground mb-1">
+                {member?.nickname}님의 독서 내역
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                총 {uniqueBooks.size}권의 책을 읽었습니다. (전체 등록 {books.length}회)
+              </p>
+            </div>
+          </div>
         </div>
 
         {error && (

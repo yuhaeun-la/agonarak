@@ -32,13 +32,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Phone, Users, UserPlus, Search, Edit, Trash2 } from 'lucide-react'
+import { Phone, Users, UserPlus, Search, Edit, Trash2, X } from 'lucide-react'
+import { resizeImage } from '@/lib/resizeImage'
 
 interface Member {
   id: string
   nickname: string
   role: 'LEADER' | 'MEMBER'
   contact: string
+  avatarUrl: string | null
   attendanceStats?: {
     totalMeetings: number
     attendedMeetings: number
@@ -59,8 +61,10 @@ export default function Members() {
   const [formData, setFormData] = useState({
     nickname: '',
     role: 'MEMBER' as 'LEADER' | 'MEMBER',
-    contact: ''
+    contact: '',
+    avatarUrl: null as string | null
   })
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
 
   useEffect(() => {
     fetchMembers()
@@ -86,6 +90,27 @@ export default function Members() {
     member.nickname.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      setError('이미지 파일만 업로드할 수 있습니다.')
+      return
+    }
+    try {
+      const dataUrl = await resizeImage(file, 100, 0.7)
+      setAvatarPreview(dataUrl)
+      setFormData(prev => ({ ...prev, avatarUrl: dataUrl }))
+    } catch {
+      setError('이미지 처리에 실패했습니다.')
+    }
+  }
+
+  const handleRemoveAvatar = () => {
+    setAvatarPreview(null)
+    setFormData(prev => ({ ...prev, avatarUrl: null }))
+  }
+
   const handleAddMember = async () => {
     if (!formData.nickname.trim()) { setError('닉네임은 필수입니다.'); return }
 
@@ -97,7 +122,8 @@ export default function Members() {
         body: JSON.stringify({
           nickname: formData.nickname.trim(),
           role: formData.role,
-          contact: formData.contact.trim()
+          contact: formData.contact.trim(),
+          avatarUrl: formData.avatarUrl
         })
       })
 
@@ -107,7 +133,7 @@ export default function Members() {
       }
 
       await fetchMembers()
-      setFormData({ nickname: '', role: 'MEMBER', contact: '' })
+      resetForm()
       setIsAddDialogOpen(false)
       setError('')
     } catch (error: unknown) {
@@ -120,7 +146,8 @@ export default function Members() {
 
   const handleEditMember = (member: Member) => {
     setEditingMember(member)
-    setFormData({ nickname: member.nickname, role: member.role, contact: member.contact || '' })
+    setFormData({ nickname: member.nickname, role: member.role, contact: member.contact || '', avatarUrl: member.avatarUrl })
+    setAvatarPreview(member.avatarUrl)
     setIsEditDialogOpen(true)
   }
 
@@ -136,7 +163,8 @@ export default function Members() {
         body: JSON.stringify({
           nickname: formData.nickname.trim(),
           role: formData.role,
-          contact: formData.contact.trim()
+          contact: formData.contact.trim(),
+          avatarUrl: formData.avatarUrl
         })
       })
 
@@ -146,7 +174,7 @@ export default function Members() {
       }
 
       await fetchMembers()
-      setFormData({ nickname: '', role: 'MEMBER', contact: '' })
+      resetForm()
       setEditingMember(null)
       setIsEditDialogOpen(false)
       setError('')
@@ -176,7 +204,8 @@ export default function Members() {
   }
 
   const resetForm = () => {
-    setFormData({ nickname: '', role: 'MEMBER', contact: '' })
+    setFormData({ nickname: '', role: 'MEMBER', contact: '', avatarUrl: null })
+    setAvatarPreview(null)
     setError('')
   }
 
@@ -257,6 +286,25 @@ export default function Members() {
                   <Input id="nickname" value={formData.nickname} onChange={(e) => setFormData({ ...formData, nickname: e.target.value })} className="col-span-3" placeholder="닉네임을 입력하세요" />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right">프로필 사진</Label>
+                  <div className="col-span-3 flex items-center gap-3">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={avatarPreview || ''} alt="미리보기" />
+                      <AvatarFallback className="bg-primary/10 text-primary">
+                        {formData.nickname ? formData.nickname.charAt(0) : '?'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 flex items-center gap-2">
+                      <Input type="file" accept="image/*" onChange={handleAvatarChange} className="flex-1 text-sm" />
+                      {avatarPreview && (
+                        <Button type="button" variant="outline" size="icon" onClick={handleRemoveAvatar} className="h-8 w-8 shrink-0">
+                          <X className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="role" className="text-right">역할</Label>
                   <Select value={formData.role} onValueChange={(value: 'LEADER' | 'MEMBER') => setFormData({ ...formData, role: value })}>
                     <SelectTrigger className="col-span-3">
@@ -330,9 +378,9 @@ export default function Members() {
                       <TableCell className="font-medium">
                         <div className="flex items-center space-x-3">
                           <Avatar className="h-8 w-8">
-                            <AvatarImage src="" alt={member.nickname} />
+                            <AvatarImage src={member.avatarUrl || ''} alt={member.nickname} />
                             <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                              {member.nickname.charAt(0).toUpperCase()}
+                              {member.nickname.charAt(0)}
                             </AvatarFallback>
                           </Avatar>
                           <div>
@@ -396,6 +444,25 @@ export default function Members() {
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="edit-nickname" className="text-right">닉네임</Label>
                 <Input id="edit-nickname" value={formData.nickname} onChange={(e) => setFormData({ ...formData, nickname: e.target.value })} className="col-span-3" placeholder="닉네임을 입력하세요" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right">프로필 사진</Label>
+                <div className="col-span-3 flex items-center gap-3">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={avatarPreview || ''} alt="미리보기" />
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      {formData.nickname ? formData.nickname.charAt(0) : '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 flex items-center gap-2">
+                    <Input type="file" accept="image/*" onChange={handleAvatarChange} className="flex-1 text-sm" />
+                    {avatarPreview && (
+                      <Button type="button" variant="outline" size="icon" onClick={handleRemoveAvatar} className="h-8 w-8 shrink-0">
+                        <X className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="edit-role" className="text-right">역할</Label>
