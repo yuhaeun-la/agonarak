@@ -142,46 +142,89 @@ export default async function Home() {
           </p>
         </div>
 
-        {/* 통계 카드 - 4등분 */}
-        <Card className="mb-6">
-          <CardContent className="p-0">
-            <div className="grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-border">
-              <div className="p-5">
-                <p className="text-sm text-muted-foreground mb-2">아고나락</p>
-                <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">D+{stats.daysSinceStart}</div>
-                <p className="text-xs text-muted-foreground mt-1">2022. 3. 19 ~</p>
-              </div>
-              <div className="p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-muted-foreground">전체 책</p>
-                  <BookOpen className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{stats.totalBooks}</div>
-                <p className="text-xs text-muted-foreground mt-1">누적 고유 권수</p>
-              </div>
-              <div className="p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-muted-foreground">전체 모임</p>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{stats.totalMeetings}</div>
-                <p className="text-xs text-muted-foreground mt-1">총 모임 횟수</p>
-              </div>
-              <div className="p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-muted-foreground">전체 멤버</p>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{stats.totalMembers}</div>
-                <p className="text-xs text-muted-foreground mt-1">활성 멤버 수</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* 벤토 그리드 */}
+        <div className="grid grid-cols-3 gap-4">
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_1.6fr]">
+          {/* D+ 히어로 카드 */}
+          <Card className="col-span-3 lg:col-span-1 lg:col-start-1 lg:row-start-1 lg:row-span-2">
+            <CardContent className="flex flex-col justify-center h-full p-6 lg:py-10">
+              <p className="text-sm text-muted-foreground mb-1">아고나락</p>
+              <div className="text-4xl lg:text-5xl font-normal font-[family-name:var(--font-heading)] tracking-tight">
+                D+{stats.daysSinceStart}
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">2022. 3. 19 ~</p>
+            </CardContent>
+          </Card>
+
+          {/* 전체 책 */}
+          <Card className="lg:col-start-2 lg:row-start-1">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm text-muted-foreground">전체 책</p>
+                <BookOpen className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{stats.totalBooks}</div>
+              <p className="text-xs text-muted-foreground mt-1">누적 고유 권수</p>
+            </CardContent>
+          </Card>
+
+          {/* 전체 모임 */}
+          <Card className="lg:col-start-3 lg:row-start-1">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm text-muted-foreground">전체 모임</p>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{stats.totalMeetings}</div>
+              <p className="text-xs text-muted-foreground mt-1">총 모임 횟수</p>
+            </CardContent>
+          </Card>
+
+          {/* 전체 멤버 */}
+          <Card className="lg:col-start-2 lg:row-start-2">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm text-muted-foreground">전체 멤버</p>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{stats.totalMembers}</div>
+              <p className="text-xs text-muted-foreground mt-1">활성 멤버 수</p>
+            </CardContent>
+          </Card>
+
+          {/* 최고 평점 */}
+          <Card className="col-span-3 lg:col-span-1 lg:col-start-3 lg:row-start-2">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm text-muted-foreground">최고 평점</p>
+                <Star className="h-4 w-4 text-muted-foreground" />
+              </div>
+              {topRatedBook ? (
+                <div>
+                  <p className="text-sm font-medium text-foreground truncate">{topRatedBook.title}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{topRatedBook.author}</p>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <div className="flex items-center gap-0.5">
+                      {Array.from({ length: topRatedBook.rating }).map((_, i) => (
+                        <Star key={i} className="h-3 w-3 fill-foreground text-foreground" />
+                      ))}
+                    </div>
+                    <Avatar className="h-4 w-4" title={topRatedBook.addedBy}>
+                      <AvatarImage src={topRatedBook.addedByAvatarUrl || ''} alt={topRatedBook.addedBy} />
+                      <AvatarFallback className="bg-muted text-muted-foreground text-[8px]">
+                        {topRatedBook.addedBy.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">아직 평점 없음</p>
+              )}
+            </CardContent>
+          </Card>
+
           {/* 다가오는 모임 */}
-          <Card>
+          <Card className="col-span-3 lg:col-span-1 lg:col-start-1 lg:row-start-3">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 font-medium">
                 <Calendar className="h-5 w-5" />
@@ -247,7 +290,7 @@ export default async function Home() {
           </Card>
 
           {/* 최근 추가된 책 */}
-          <Card>
+          <Card className="col-span-3 lg:col-span-2 lg:col-start-2 lg:row-start-3">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 font-medium">
                 <BookOpen className="h-5 w-5" />
@@ -308,42 +351,6 @@ export default async function Home() {
             </CardContent>
           </Card>
         </div>
-
-        {/* 최고 평점 책 */}
-        {topRatedBook && (
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-medium">
-                <Star className="h-5 w-5" />
-                최고 평점
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted flex-shrink-0">
-                  <BookOpen className="h-6 w-6 text-muted-foreground" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-foreground">{topRatedBook.title}</p>
-                  <p className="text-sm text-muted-foreground">{topRatedBook.author}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <div className="flex items-center gap-0.5">
-                      {Array.from({ length: topRatedBook.rating }).map((_, i) => (
-                        <Star key={i} className="h-3 w-3 fill-foreground text-foreground" />
-                      ))}
-                    </div>
-                    <Avatar className="h-4 w-4" title={topRatedBook.addedBy}>
-                      <AvatarImage src={topRatedBook.addedByAvatarUrl || ''} alt={topRatedBook.addedBy} />
-                      <AvatarFallback className="bg-muted text-muted-foreground text-[8px]">
-                        {topRatedBook.addedBy.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </main>
     </div>
   )
