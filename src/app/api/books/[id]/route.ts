@@ -56,7 +56,7 @@ export async function PUT(
   try {
     const { id } = await params
     const body = await request.json()
-    const { title, author, genres, notes, registeredDate, addedById } = body
+    const { title, author, genres, notes, registeredDate, addedById, rating } = body
 
     // 입력 검증
     if (!title || !author) {
@@ -87,6 +87,7 @@ export async function PUT(
           title: title.trim(),
           author: author.trim(),
           notes: notes || '',
+          rating: rating ?? 0,
           registeredDate: new Date(registeredDate),
           addedById: addedById || null
         }

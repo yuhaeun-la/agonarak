@@ -32,7 +32,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { BookOpen, Plus, Search, Filter, User, Calendar, BookMarked, Edit, Trash2, Loader2 } from 'lucide-react'
+import { BookOpen, Plus, Search, Filter, User, Calendar, BookMarked, Edit, Trash2, Loader2, Star } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useRouter } from 'next/navigation'
 
@@ -42,6 +42,7 @@ interface Book {
   author: string
   genres: string[]
   notes: string
+  rating: number
   registeredDate: string
   addedBy: string
   addedByAvatarUrl: string | null
@@ -105,6 +106,7 @@ export default function Books() {
     registeredDate: '',
     genres: [] as string[],
     notes: '',
+    rating: 0,
     addedByIds: [] as string[]
   })
 
@@ -232,6 +234,7 @@ export default function Books() {
             registeredDate: formData.registeredDate,
             genres: formData.genres,
             notes: formData.notes.trim(),
+            rating: formData.rating,
             addedById: addedById
           })
         })
@@ -262,6 +265,7 @@ export default function Books() {
       registeredDate: book.registeredDate.split('T')[0],
       genres: book.genres,
       notes: book.notes || '',
+      rating: book.rating || 0,
       addedByIds: [book.addedById]
     })
     setBookSearchQuery(book.title)
@@ -290,6 +294,7 @@ export default function Books() {
           registeredDate: formData.registeredDate,
           genres: formData.genres,
           notes: formData.notes.trim(),
+          rating: formData.rating,
           addedById: formData.addedByIds[0] || null
         })
       })
@@ -330,7 +335,7 @@ export default function Books() {
   }
 
   const resetForm = () => {
-    setFormData({ title: '', author: '', registeredDate: '', genres: [], notes: '', addedByIds: [] })
+    setFormData({ title: '', author: '', registeredDate: '', genres: [], notes: '', rating: 0, addedByIds: [] })
     setBookSearchQuery('')
     setBookSearchResults([])
     setShowSearchResults(false)
@@ -601,6 +606,27 @@ export default function Books() {
                     </div>
                   </div>
 
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label className="text-right">별점</Label>
+                    <div className="col-span-3 flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, rating: prev.rating === star ? 0 : star }))}
+                          className="p-0.5"
+                        >
+                          <Star
+                            className={`h-5 w-5 ${star <= formData.rating ? 'fill-foreground text-foreground' : 'text-muted-foreground/30'}`}
+                          />
+                        </button>
+                      ))}
+                      {formData.rating > 0 && (
+                        <span className="text-xs text-muted-foreground ml-2">{formData.rating}점</span>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-4 items-start gap-4">
                     <Label htmlFor="notes" className="text-right pt-2">독서 노트</Label>
                     <Textarea id="notes" value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} className="col-span-3" placeholder="책에 대한 메모나 감상을 적어보세요..." rows={3} />
@@ -657,6 +683,7 @@ export default function Books() {
                   <TableRow>
                     <TableHead>책 정보</TableHead>
                     <TableHead>장르</TableHead>
+                    <TableHead>별점</TableHead>
                     <TableHead>추가자</TableHead>
                     <TableHead>등록일</TableHead>
                     <TableHead>노트</TableHead>
@@ -678,6 +705,17 @@ export default function Books() {
                             ? book.genres.join(' · ')
                             : '장르 없음'}
                         </span>
+                      </TableCell>
+                      <TableCell>
+                        {book.rating > 0 ? (
+                          <div className="flex items-center gap-0.5">
+                            {Array.from({ length: book.rating }).map((_, i) => (
+                              <Star key={i} className="h-3 w-3 fill-foreground text-foreground" />
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">-</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Avatar className="h-6 w-6" title={book.addedBy}>
@@ -772,6 +810,27 @@ export default function Books() {
                       </div>
                     ))}
                   </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right">별점</Label>
+                <div className="col-span-3 flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, rating: prev.rating === star ? 0 : star }))}
+                      className="p-0.5"
+                    >
+                      <Star
+                        className={`h-5 w-5 ${star <= formData.rating ? 'fill-foreground text-foreground' : 'text-muted-foreground/30'}`}
+                      />
+                    </button>
+                  ))}
+                  {formData.rating > 0 && (
+                    <span className="text-xs text-muted-foreground ml-2">{formData.rating}점</span>
+                  )}
                 </div>
               </div>
 

@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { ArrowLeft, BookOpen, Search, Calendar, User } from 'lucide-react'
+import { ArrowLeft, BookOpen, Search, Calendar, User, Star } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 interface Book {
@@ -23,6 +23,7 @@ interface Book {
   author: string
   genres: string[]
   notes: string
+  rating: number
   registeredDate: string
   createdAt: string
   addedById: string | null
@@ -253,6 +254,7 @@ export default function MemberBooksPage() {
                     <TableHead>제목</TableHead>
                     <TableHead>저자</TableHead>
                     <TableHead>장르</TableHead>
+                    <TableHead>별점</TableHead>
                     <TableHead>등록일</TableHead>
                     <TableHead>메모</TableHead>
                   </TableRow>
@@ -266,6 +268,17 @@ export default function MemberBooksPage() {
                         <span className="text-xs text-muted-foreground">
                           {book.genres.length > 0 ? book.genres.join(' · ') : '장르 없음'}
                         </span>
+                      </TableCell>
+                      <TableCell>
+                        {book.rating > 0 ? (
+                          <div className="flex items-center gap-0.5">
+                            {Array.from({ length: book.rating }).map((_, i) => (
+                              <Star key={i} className="h-3 w-3 fill-foreground text-foreground" />
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">-</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">{formatDate(book.registeredDate)}</div>

@@ -6,25 +6,28 @@ import {
   Calendar,
   BookOpen,
   Users,
-  TrendingUp,
   Clock,
   MapPin,
+  Star,
 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { prisma } from '@/lib/prisma'
 
+const START_DATE = new Date('2022-03-19')
+
 const emptyData = {
-  stats: { totalMembers: 0, upcomingMeetings: 0, booksThisMonth: 0, totalBooks: 0 },
+  stats: { daysSinceStart: 0, totalBooks: 0, totalMeetings: 0, totalMembers: 0 },
   upcomingMeetings: [] as Array<{ id: string; date: string; location: string; memo: string; books: Array<{ id: string; title: string; author: string }> }>,
-  recentBooks: [] as Array<{ id: string; title: string; author: string; genres: string[]; addedBy: string; addedByAvatarUrl: string | null; createdAt: string }>
+  recentBooks: [] as Array<{ id: string; title: string; author: string; genres: string[]; addedBy: string; addedByAvatarUrl: string | null; createdAt: string }>,
+  topRatedBook: null as { title: string; author: string; rating: number; addedBy: string; addedByAvatarUrl: string | null } | null
 }
 
 async function getDashboardData() {
   try {
     const now = new Date()
-    const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    const daysSinceStart = Math.floor((now.getTime() - START_DATE.getTime()) / 86400000)
 
-    const [members, meetings, books] = await Promise.all([
+    const [members, upcomingMeetingsRaw, totalMeetings, books, topRatedBookRaw] = await Promise.all([
       prisma.member.findMany({ select: { id: true } }),
       prisma.meeting.findMany({
         where: { date: { gte: now } },
@@ -38,6 +41,7 @@ async function getDashboardData() {
         orderBy: { date: 'asc' },
         take: 3
       }),
+      prisma.meeting.count(),
       prisma.book.findMany({
         include: {
           addedBy: { select: { nickname: true, avatarUrl: true } },
@@ -45,21 +49,22 @@ async function getDashboardData() {
         },
         orderBy: { createdAt: 'desc' },
         take: 20
+      }),
+      prisma.book.findFirst({
+        where: { rating: { gt: 0 } },
+        orderBy: [{ rating: 'desc' }, { createdAt: 'desc' }],
+        include: {
+          addedBy: { select: { nickname: true, avatarUrl: true } },
+        }
       })
     ])
 
     const uniqueBooks = new Set<string>()
-    const uniqueBooksThisMonth = new Set<string>()
-
     books.forEach((book) => {
-      const bookKey = `${book.title}-${book.author}`
-      uniqueBooks.add(bookKey)
-      if (book.createdAt >= thisMonth) {
-        uniqueBooksThisMonth.add(bookKey)
-      }
+      uniqueBooks.add(`${book.title}-${book.author}`)
     })
 
-    const upcomingMeetings = meetings.map((m) => ({
+    const upcomingMeetings = upcomingMeetingsRaw.map((m) => ({
       id: m.id,
       date: m.date.toISOString(),
       location: m.location || '',
@@ -77,15 +82,24 @@ async function getDashboardData() {
       createdAt: b.createdAt.toISOString()
     }))
 
+    const topRatedBook = topRatedBookRaw ? {
+      title: topRatedBookRaw.title,
+      author: topRatedBookRaw.author,
+      rating: topRatedBookRaw.rating || 0,
+      addedBy: topRatedBookRaw.addedBy?.nickname || 'Unknown',
+      addedByAvatarUrl: topRatedBookRaw.addedBy?.avatarUrl || null,
+    } : null
+
     return {
       stats: {
+        daysSinceStart,
+        totalBooks: uniqueBooks.size,
+        totalMeetings,
         totalMembers: members.length,
-        upcomingMeetings: upcomingMeetings.length,
-        booksThisMonth: uniqueBooksThisMonth.size,
-        totalBooks: uniqueBooks.size
       },
       upcomingMeetings,
-      recentBooks
+      recentBooks,
+      topRatedBook,
     }
   } catch (error) {
     console.error('Failed to fetch dashboard data:', error)
@@ -115,7 +129,7 @@ function formatDate(dateString: string) {
 export const dynamic = 'force-dynamic'
 
 export default async function Home() {
-  const { stats, upcomingMeetings, recentBooks } = await getDashboardData()
+  const { stats, upcomingMeetings, recentBooks, topRatedBook } = await getDashboardData()
 
   return (
     <div className="min-h-screen bg-background pb-16 sm:pb-0">
@@ -128,10 +142,31 @@ export default async function Home() {
           </p>
         </div>
 
-        {/* 통계 카드 - 하나의 카드 안에서 디바이더로 4등분 */}
+        {/* 통계 카드 - 4등분 */}
         <Card className="mb-6">
           <CardContent className="p-0">
             <div className="grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-border">
+              <div className="p-5">
+                <p className="text-sm text-muted-foreground mb-2">아고나락</p>
+                <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">D+{stats.daysSinceStart}</div>
+                <p className="text-xs text-muted-foreground mt-1">2022. 3. 19 ~</p>
+              </div>
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm text-muted-foreground">전체 책</p>
+                  <BookOpen className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{stats.totalBooks}</div>
+                <p className="text-xs text-muted-foreground mt-1">누적 고유 권수</p>
+              </div>
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm text-muted-foreground">전체 모임</p>
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{stats.totalMeetings}</div>
+                <p className="text-xs text-muted-foreground mt-1">총 모임 횟수</p>
+              </div>
               <div className="p-5">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm text-muted-foreground">전체 멤버</p>
@@ -139,30 +174,6 @@ export default async function Home() {
                 </div>
                 <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{stats.totalMembers}</div>
                 <p className="text-xs text-muted-foreground mt-1">활성 멤버 수</p>
-              </div>
-              <div className="p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-muted-foreground">예정된 모임</p>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{stats.upcomingMeetings}</div>
-                <p className="text-xs text-muted-foreground mt-1">다가오는 모임</p>
-              </div>
-              <div className="p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-muted-foreground">이번 달 책</p>
-                  <BookOpen className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{stats.booksThisMonth}</div>
-                <p className="text-xs text-muted-foreground mt-1">이번 달 추가된 책</p>
-              </div>
-              <div className="p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-muted-foreground">전체 책</p>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{stats.totalBooks}</div>
-                <p className="text-xs text-muted-foreground mt-1">총 등록된 책</p>
               </div>
             </div>
           </CardContent>
@@ -298,41 +309,41 @@ export default async function Home() {
           </Card>
         </div>
 
-        {/* 빠른 액션 */}
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle className="font-medium">빠른 시작</CardTitle>
-            <CardDescription>자주 사용하는 기능들에 빠르게 접근하세요</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <Button className="h-20 flex-col space-y-2" asChild>
-                <Link href="/members">
-                  <Users className="h-6 w-6" />
-                  <span>멤버 관리</span>
-                </Link>
-              </Button>
-              <Button variant="outline" className="h-20 flex-col space-y-2" asChild>
-                <Link href="/meetings">
-                  <Calendar className="h-6 w-6" />
-                  <span>모임 일정</span>
-                </Link>
-              </Button>
-              <Button variant="outline" className="h-20 flex-col space-y-2" asChild>
-                <Link href="/books">
-                  <BookOpen className="h-6 w-6" />
-                  <span>책 관리</span>
-                </Link>
-              </Button>
-              <Button variant="outline" className="h-20 flex-col space-y-2" asChild>
-                <Link href="/books">
-                  <TrendingUp className="h-6 w-6" />
-                  <span>통계 보기</span>
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {/* 최고 평점 책 */}
+        {topRatedBook && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 font-medium">
+                <Star className="h-5 w-5" />
+                최고 평점
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted flex-shrink-0">
+                  <BookOpen className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-foreground">{topRatedBook.title}</p>
+                  <p className="text-sm text-muted-foreground">{topRatedBook.author}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-0.5">
+                      {Array.from({ length: topRatedBook.rating }).map((_, i) => (
+                        <Star key={i} className="h-3 w-3 fill-foreground text-foreground" />
+                      ))}
+                    </div>
+                    <Avatar className="h-4 w-4" title={topRatedBook.addedBy}>
+                      <AvatarImage src={topRatedBook.addedByAvatarUrl || ''} alt={topRatedBook.addedBy} />
+                      <AvatarFallback className="bg-muted text-muted-foreground text-[8px]">
+                        {topRatedBook.addedBy.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </main>
     </div>
   )
