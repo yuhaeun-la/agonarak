@@ -678,6 +678,7 @@ export default function Books() {
                 )}
               </div>
             ) : (
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -754,6 +755,7 @@ export default function Books() {
                   ))}
                 </TableBody>
               </Table>
+              </div>
             )}
           </CardContent>
         </Card>
