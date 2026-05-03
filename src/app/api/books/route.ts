@@ -47,7 +47,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { title, author, registeredDate, genres, notes, addedById, rating } = body
+    const { title, author, registeredDate, genres, notes, addedById, rating, thumbnail } = body
 
     // 입력 검증
     if (!title || !author || !registeredDate) {
@@ -77,6 +77,7 @@ export async function POST(request: NextRequest) {
           author,
           notes: notes || '',
           rating: rating || 0,
+          thumbnail: thumbnail || null,
           registeredDate: new Date(registeredDate),
           clubId: club.id,
           addedById: addedById || null

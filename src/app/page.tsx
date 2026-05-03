@@ -18,7 +18,7 @@ const START_DATE = new Date('2022-03-19')
 const emptyData = {
   stats: { daysSinceStart: 0, totalBooks: 0, totalMeetings: 0, totalMembers: 0 },
   upcomingMeetings: [] as Array<{ id: string; date: string; location: string; memo: string; books: Array<{ id: string; title: string; author: string }> }>,
-  recentBooks: [] as Array<{ id: string; title: string; author: string; genres: string[]; addedBy: string; addedByAvatarUrl: string | null; createdAt: string }>,
+  recentBooks: [] as Array<{ id: string; title: string; author: string; thumbnail: string | null; genres: string[]; addedBy: string; addedByAvatarUrl: string | null; createdAt: string }>,
   topRatedBook: null as { title: string; author: string; rating: number; addedBy: string; addedByAvatarUrl: string | null } | null
 }
 
@@ -76,6 +76,7 @@ async function getDashboardData() {
       id: b.id,
       title: b.title,
       author: b.author,
+      thumbnail: b.thumbnail || null,
       genres: b.genres.map((bg) => bg.genre.name),
       addedBy: b.addedBy?.nickname || 'Unknown',
       addedByAvatarUrl: b.addedBy?.avatarUrl || null,
@@ -316,9 +317,17 @@ export default async function Home() {
                   {recentBooks.map((book) => (
                     <div key={book.id} className="flex items-center space-x-3 p-3 rounded-lg border">
                       <div className="flex-shrink-0">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                          <BookOpen className="h-5 w-5 text-muted-foreground" />
-                        </div>
+                        {book.thumbnail ? (
+                          <img
+                            src={book.thumbnail}
+                            alt={book.title}
+                            className="h-14 w-10 rounded object-cover bg-muted"
+                          />
+                        ) : (
+                          <div className="flex h-14 w-10 items-center justify-center rounded bg-muted">
+                            <BookOpen className="h-5 w-5 text-muted-foreground" />
+                          </div>
+                        )}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">

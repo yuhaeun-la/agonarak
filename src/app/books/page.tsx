@@ -43,6 +43,7 @@ interface Book {
   genres: string[]
   notes: string
   rating: number
+  thumbnail: string | null
   registeredDate: string
   addedBy: string
   addedByAvatarUrl: string | null
@@ -107,6 +108,7 @@ export default function Books() {
     genres: [] as string[],
     notes: '',
     rating: 0,
+    thumbnail: '',
     addedByIds: [] as string[]
   })
 
@@ -193,6 +195,7 @@ export default function Books() {
       ...prev,
       title: result.title,
       author: result.author,
+      thumbnail: result.thumbnail || '',
     }))
     setBookSearchQuery(result.title)
     setShowSearchResults(false)
@@ -235,6 +238,7 @@ export default function Books() {
             genres: formData.genres,
             notes: formData.notes.trim(),
             rating: formData.rating,
+            thumbnail: formData.thumbnail || null,
             addedById: addedById
           })
         })
@@ -266,6 +270,7 @@ export default function Books() {
       genres: book.genres,
       notes: book.notes || '',
       rating: book.rating || 0,
+      thumbnail: book.thumbnail || '',
       addedByIds: [book.addedById]
     })
     setBookSearchQuery(book.title)
@@ -295,6 +300,7 @@ export default function Books() {
           genres: formData.genres,
           notes: formData.notes.trim(),
           rating: formData.rating,
+          thumbnail: formData.thumbnail || null,
           addedById: formData.addedByIds[0] || null
         })
       })
@@ -335,7 +341,7 @@ export default function Books() {
   }
 
   const resetForm = () => {
-    setFormData({ title: '', author: '', registeredDate: '', genres: [], notes: '', rating: 0, addedByIds: [] })
+    setFormData({ title: '', author: '', registeredDate: '', genres: [], notes: '', rating: 0, thumbnail: '', addedByIds: [] })
     setBookSearchQuery('')
     setBookSearchResults([])
     setShowSearchResults(false)
@@ -695,9 +701,22 @@ export default function Books() {
                   {filteredBooks.map((book) => (
                     <TableRow key={book.id}>
                       <TableCell>
-                        <div>
-                          <div className="font-medium">{book.title}</div>
-                          <div className="text-sm text-muted-foreground">{book.author}</div>
+                        <div className="flex items-center gap-3">
+                          {book.thumbnail ? (
+                            <img
+                              src={book.thumbnail}
+                              alt={book.title}
+                              className="h-12 w-9 rounded object-cover bg-muted flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="h-12 w-9 rounded bg-muted flex-shrink-0 flex items-center justify-center">
+                              <BookOpen className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div>
+                            <div className="font-medium">{book.title}</div>
+                            <div className="text-sm text-muted-foreground">{book.author}</div>
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>
