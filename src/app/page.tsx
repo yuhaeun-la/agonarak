@@ -135,69 +135,69 @@ export default async function Home() {
     <div className="min-h-screen bg-background pb-16 sm:pb-0">
       <Navbar />
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-6">
-          <h1 className="text-xl font-medium text-foreground font-[family-name:var(--font-heading)]">대시보드</h1>
+        <div className="mb-10">
+          <h1 className="text-2xl font-medium text-foreground font-[family-name:var(--font-heading)]">대시보드</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             독서 모임 현황을 한눈에 확인하세요
           </p>
         </div>
 
         {/* 벤토 그리드 */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-5">
 
           {/* D+ 히어로 카드 */}
           <Card className="col-span-3 lg:col-span-1 lg:col-start-1 lg:row-start-1 lg:row-span-2">
-            <CardContent className="flex flex-col justify-center h-full p-6 lg:py-10">
-              <p className="text-sm text-muted-foreground mb-1">아고나락</p>
-              <div className="text-4xl lg:text-5xl font-normal font-[family-name:var(--font-heading)] tracking-tight">
+            <CardContent className="flex flex-col justify-center h-full p-8 lg:py-12">
+              <p className="text-xs tracking-widest uppercase text-muted-foreground mb-3">아고나락</p>
+              <div className="text-5xl lg:text-6xl font-normal font-[family-name:var(--font-heading)] tracking-tight leading-none">
                 D+{stats.daysSinceStart}
               </div>
-              <p className="text-xs text-muted-foreground mt-2">2022. 3. 19 ~</p>
+              <p className="text-sm text-muted-foreground mt-4">2022. 3. 19 ~</p>
             </CardContent>
           </Card>
 
           {/* 전체 책 */}
           <Card className="lg:col-start-2 lg:row-start-1">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-muted-foreground">전체 책</p>
-                <BookOpen className="h-4 w-4 text-muted-foreground" />
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs tracking-widest uppercase text-muted-foreground">전체 책</p>
+                <BookOpen className="h-4 w-4 text-muted-foreground/50" />
               </div>
-              <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{stats.totalBooks}</div>
+              <div className="text-3xl font-normal font-[family-name:var(--font-heading)]">{stats.totalBooks}</div>
               <p className="text-xs text-muted-foreground mt-1">누적 고유 권수</p>
             </CardContent>
           </Card>
 
           {/* 전체 모임 */}
           <Card className="lg:col-start-3 lg:row-start-1">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-muted-foreground">전체 모임</p>
-                <Calendar className="h-4 w-4 text-muted-foreground" />
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs tracking-widest uppercase text-muted-foreground">전체 모임</p>
+                <Calendar className="h-4 w-4 text-muted-foreground/50" />
               </div>
-              <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{stats.totalMeetings}</div>
+              <div className="text-3xl font-normal font-[family-name:var(--font-heading)]">{stats.totalMeetings}</div>
               <p className="text-xs text-muted-foreground mt-1">총 모임 횟수</p>
             </CardContent>
           </Card>
 
           {/* 전체 멤버 */}
           <Card className="lg:col-start-2 lg:row-start-2">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-muted-foreground">전체 멤버</p>
-                <Users className="h-4 w-4 text-muted-foreground" />
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs tracking-widest uppercase text-muted-foreground">전체 멤버</p>
+                <Users className="h-4 w-4 text-muted-foreground/50" />
               </div>
-              <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{stats.totalMembers}</div>
+              <div className="text-3xl font-normal font-[family-name:var(--font-heading)]">{stats.totalMembers}</div>
               <p className="text-xs text-muted-foreground mt-1">활성 멤버 수</p>
             </CardContent>
           </Card>
 
           {/* 최고 평점 */}
           <Card className="col-span-3 lg:col-span-1 lg:col-start-3 lg:row-start-2">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-muted-foreground">최고 평점</p>
-                <Star className="h-4 w-4 text-muted-foreground" />
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs tracking-widest uppercase text-muted-foreground">최고 평점</p>
+                <Star className="h-4 w-4 text-muted-foreground/50" />
               </div>
               {topRatedBook ? (
                 <div>
@@ -224,7 +224,7 @@ export default async function Home() {
           </Card>
 
           {/* 다가오는 모임 */}
-          <Card className="col-span-3 lg:col-span-1 lg:col-start-1 lg:row-start-3">
+          <Card className="col-span-3 lg:col-span-1 lg:col-start-1 lg:row-start-3 mt-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 font-medium">
                 <Calendar className="h-5 w-5" />
@@ -290,7 +290,7 @@ export default async function Home() {
           </Card>
 
           {/* 최근 추가된 책 */}
-          <Card className="col-span-3 lg:col-span-2 lg:col-start-2 lg:row-start-3">
+          <Card className="col-span-3 lg:col-span-2 lg:col-start-2 lg:row-start-3 mt-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 font-medium">
                 <BookOpen className="h-5 w-5" />
