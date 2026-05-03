@@ -377,7 +377,7 @@ export default function Members() {
                     <TableRow key={member.id}>
                       <TableCell className="font-medium">
                         <div className="flex items-center space-x-3">
-                          <Avatar className="h-8 w-8">
+                          <Avatar className="h-10 w-10">
                             <AvatarImage src={member.avatarUrl || ''} alt={member.nickname} />
                             <AvatarFallback className="bg-muted text-muted-foreground text-sm">
                               {member.nickname.charAt(0)}

@@ -487,9 +487,9 @@ export default function Books() {
                   >
                     <CardHeader>
                       <CardTitle className="text-sm flex items-center gap-2">
-                        <Avatar className="h-7 w-7">
+                        <Avatar className="h-10 w-10">
                           <AvatarImage src={member?.avatarUrl || ''} alt={memberStat.member} />
-                          <AvatarFallback className="bg-muted text-muted-foreground text-xs">
+                          <AvatarFallback className="bg-muted text-muted-foreground text-sm">
                             {memberStat.member.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
@@ -738,9 +738,9 @@ export default function Books() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Avatar className="h-8 w-8" title={book.addedBy}>
+                        <Avatar className="h-10 w-10" title={book.addedBy}>
                           <AvatarImage src={book.addedByAvatarUrl || ''} alt={book.addedBy} />
-                          <AvatarFallback className="bg-muted text-muted-foreground text-xs">
+                          <AvatarFallback className="bg-muted text-muted-foreground text-sm">
                             {book.addedBy.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
