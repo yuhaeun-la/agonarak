@@ -25,6 +25,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { CalendarDays, MapPin, Clock, Plus, Search, Users, Calendar, Trash2, Edit } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -62,14 +69,20 @@ export default function Meetings() {
   const [submitting, setSubmitting] = useState(false)
   const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null)
 
+  const LOCATION_PRESETS = ['디스코드', '오프라인'] as const
+
   const [formData, setFormData] = useState({
     title: '',
     date: '',
     time: '',
-    location: '',
+    location: '디스코드',
     memo: '',
     attendees: [] as string[]
   })
+
+  const locationType = LOCATION_PRESETS.includes(formData.location as typeof LOCATION_PRESETS[number])
+    ? formData.location
+    : '기타'
 
   useEffect(() => {
     Promise.all([fetchMeetings(), fetchMembers()])
@@ -139,7 +152,7 @@ export default function Meetings() {
       }
 
       await fetchMeetings()
-      setFormData({ title: '', date: '', time: '', location: '', memo: '', attendees: [] })
+      setFormData({ title: '', date: '', time: '', location: '디스코드', memo: '', attendees: [] })
       setIsAddDialogOpen(false)
       setError('')
     } catch (error: unknown) {
@@ -226,7 +239,7 @@ export default function Meetings() {
   }
 
   const resetForm = () => {
-    setFormData({ title: '', date: '', time: '', location: '', memo: '', attendees: [] })
+    setFormData({ title: '', date: '', time: '', location: '디스코드', memo: '', attendees: [] })
     setError('')
   }
 
@@ -342,8 +355,31 @@ export default function Meetings() {
                   <Input id="time" type="time" value={formData.time} onChange={(e) => setFormData({ ...formData, time: e.target.value })} className="col-span-3" />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="location" className="text-right">장소</Label>
-                  <Input id="location" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} className="col-span-3" placeholder="모임 장소를 입력하세요" />
+                  <Label className="text-right">장소</Label>
+                  <div className="col-span-3 space-y-2">
+                    <Select
+                      value={locationType}
+                      onValueChange={(value) => {
+                        setFormData({ ...formData, location: value === '기타' ? '' : value })
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="디스코드">디스코드</SelectItem>
+                        <SelectItem value="오프라인">오프라인</SelectItem>
+                        <SelectItem value="기타">기타</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {locationType === '기타' && (
+                      <Input
+                        value={formData.location}
+                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                        placeholder="장소를 입력하세요"
+                      />
+                    )}
+                  </div>
                 </div>
                 <div className="grid grid-cols-4 items-start gap-4">
                   <Label htmlFor="memo" className="text-right pt-2">메모</Label>
@@ -595,8 +631,31 @@ export default function Meetings() {
                 <Input id="edit-time" type="time" value={formData.time} onChange={(e) => setFormData({ ...formData, time: e.target.value })} className="col-span-3" />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-location" className="text-right">장소</Label>
-                <Input id="edit-location" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} className="col-span-3" placeholder="모임 장소를 입력하세요" />
+                <Label className="text-right">장소</Label>
+                <div className="col-span-3 space-y-2">
+                  <Select
+                    value={locationType}
+                    onValueChange={(value) => {
+                      setFormData({ ...formData, location: value === '기타' ? '' : value })
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="디스코드">디스코드</SelectItem>
+                      <SelectItem value="오프라인">오프라인</SelectItem>
+                      <SelectItem value="기타">기타</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {locationType === '기타' && (
+                    <Input
+                      value={formData.location}
+                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                      placeholder="장소를 입력하세요"
+                    />
+                  )}
+                </div>
               </div>
               <div className="grid grid-cols-4 items-start gap-4">
                 <Label htmlFor="edit-memo" className="text-right pt-2">메모</Label>
