@@ -1,20 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-interface GoogleBooksItem {
-  volumeInfo: {
-    title?: string
-    authors?: string[]
-    publisher?: string
-    publishedDate?: string
-    industryIdentifiers?: Array<{
-      type: string
-      identifier: string
-    }>
-    imageLinks?: {
-      thumbnail?: string
-      smallThumbnail?: string
-    }
-  }
+interface NaverBookItem {
+  title: string
+  author: string
+  publisher: string
+  isbn: string
+  image: string
+}
+
+interface NaverBookResponse {
+  items: NaverBookItem[]
 }
 
 export async function GET(request: NextRequest) {
@@ -25,37 +20,47 @@ export async function GET(request: NextRequest) {
     return NextResponse.json([])
   }
 
+  const clientId = process.env.NAVER_CLIENT_ID
+  const clientSecret = process.env.NAVER_CLIENT_SECRET
+
+  if (!clientId || !clientSecret) {
+    console.error('Naver API credentials not configured')
+    return NextResponse.json(
+      { error: 'Search service not configured' },
+      { status: 500 }
+    )
+  }
+
   try {
     const response = await fetch(
-      `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=8&langRestrict=ko&printType=books`,
-      { next: { revalidate: 300 } }
+      `https://openapi.naver.com/v1/search/book.json?query=${encodeURIComponent(query)}&display=8`,
+      {
+        headers: {
+          'X-Naver-Client-Id': clientId,
+          'X-Naver-Client-Secret': clientSecret,
+        },
+      }
     )
 
     if (!response.ok) {
-      throw new Error('Google Books API request failed')
+      throw new Error(`Naver API request failed: ${response.status}`)
     }
 
-    const data = await response.json()
+    const data: NaverBookResponse = await response.json()
 
     if (!data.items) {
       return NextResponse.json([])
     }
 
-    const books = data.items.map((item: GoogleBooksItem) => {
-      const info = item.volumeInfo
-      const isbn = info.industryIdentifiers?.find(
-        (id) => id.type === 'ISBN_13' || id.type === 'ISBN_10'
-      )
+    const stripHtml = (str: string) => str.replace(/<[^>]*>/g, '')
 
-      return {
-        title: info.title || '',
-        author: info.authors?.join(', ') || '',
-        publisher: info.publisher || '',
-        publishedDate: info.publishedDate || '',
-        isbn: isbn?.identifier || '',
-        thumbnail: info.imageLinks?.thumbnail?.replace('http:', 'https:') || '',
-      }
-    })
+    const books = data.items.map((item) => ({
+      title: stripHtml(item.title),
+      author: stripHtml(item.author),
+      publisher: stripHtml(item.publisher),
+      isbn: item.isbn?.split(' ').pop() || '',
+      thumbnail: item.image || '',
+    }))
 
     return NextResponse.json(books)
   } catch (error) {
