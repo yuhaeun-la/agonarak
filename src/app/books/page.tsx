@@ -719,9 +719,9 @@ export default function Books() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Avatar className="h-6 w-6" title={book.addedBy}>
+                        <Avatar className="h-8 w-8" title={book.addedBy}>
                           <AvatarImage src={book.addedByAvatarUrl || ''} alt={book.addedBy} />
-                          <AvatarFallback className="bg-muted text-muted-foreground text-[10px]">
+                          <AvatarFallback className="bg-muted text-muted-foreground text-xs">
                             {book.addedBy.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
