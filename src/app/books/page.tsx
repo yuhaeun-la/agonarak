@@ -493,6 +493,7 @@ export default function Books() {
                             {memberStat.member.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
+                        <span>{memberStat.member}</span>
                       </CardTitle>
                       <CardDescription className="text-xs">
                         총 {memberStat.totalBooks}권 추가
