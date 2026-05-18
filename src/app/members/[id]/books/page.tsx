@@ -105,10 +105,9 @@ export default function MemberBooksPage() {
 
   const maxGenreCount = topGenres.length > 0 ? (topGenres[0][1] as number) : 0
 
-  const ratedBooks = books.filter(b => b.rating > 0)
-  const avgRating = ratedBooks.length > 0
-    ? (ratedBooks.reduce((sum, b) => sum + b.rating, 0) / ratedBooks.length)
-    : 0
+  const topRatedBook = books
+    .filter(b => b.rating > 0)
+    .sort((a, b) => b.rating - a.rating)[0] || null
 
   // 타임라인: 등록일 기준 연도-월 그룹핑
   const timelineGroups = [...books]
@@ -166,7 +165,7 @@ export default function MemberBooksPage() {
                 {member?.nickname}님의 서재
               </h1>
               <p className="text-sm text-muted-foreground mt-1">
-                총 {uniqueBooks.size}권 · {Object.keys(genreStats).length}개 장르{avgRating > 0 && ` · 평균 ${avgRating.toFixed(1)}점`}
+                총 {uniqueBooks.size}권 · {Object.keys(genreStats).length}개 장르
               </p>
             </div>
           </div>
@@ -214,15 +213,22 @@ export default function MemberBooksPage() {
           <Card>
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs tracking-widest uppercase text-muted-foreground">평균 별점</p>
+                <p className="text-xs tracking-widest uppercase text-muted-foreground">최고 평점</p>
                 <Star className="h-4 w-4 text-muted-foreground/50" />
               </div>
-              <div className="text-3xl font-normal font-[family-name:var(--font-heading)]">
-                {avgRating > 0 ? avgRating.toFixed(1) : '-'}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {ratedBooks.length > 0 ? `${ratedBooks.length}권 평가` : '평가 없음'}
-              </p>
+              {topRatedBook ? (
+                <>
+                  <p className="text-sm font-medium text-foreground truncate">{topRatedBook.title}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{topRatedBook.author}</p>
+                  <div className="flex items-center gap-0.5 mt-1.5">
+                    {Array.from({ length: topRatedBook.rating }).map((_, i) => (
+                      <Star key={i} className="h-3 w-3 fill-foreground text-foreground" />
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">평가 없음</p>
+              )}
             </CardContent>
           </Card>
         </div>
