@@ -30,7 +30,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Label } from '@/components/ui/label'
-import { BookOpen, Plus, Search, Filter, User, BookMarked, Edit, Trash2, Loader2, Star, LayoutGrid, List, MoreHorizontal } from 'lucide-react'
+import { BookOpen, Plus, Search, Filter, User, Edit, Trash2, Loader2, Star, MoreHorizontal } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useRouter } from 'next/navigation'
 
@@ -82,7 +82,6 @@ export default function Books() {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedGenre, setSelectedGenre] = useState('all')
-  const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [books, setBooks] = useState<Book[]>([])
@@ -354,7 +353,7 @@ export default function Books() {
   }
 
   // 멤버별 통계
-  const memberGenreStats = members.map(member => {
+  const memberStats = members.map(member => {
     const memberBooks = books.filter(book => book.addedBy === member.nickname)
     const uniqueBooks = new Map()
     memberBooks.forEach(book => {
@@ -371,22 +370,19 @@ export default function Books() {
       }
     })
 
+    const topGenres = Object.entries(genreCount)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 2)
+      .map(([genre]) => genre)
+
     return {
       memberId: member.id,
-      member: member.nickname,
+      nickname: member.nickname,
       avatarUrl: member.avatarUrl,
       totalBooks: uniqueBooks.size,
-      genres: Object.entries(genreCount).map(([genre, count]) => ({ genre, count })).sort((a, b) => b.count - a.count)
+      topGenres,
     }
   }).filter(stat => stat.totalBooks > 0)
-
-  const maxMemberBooks = memberGenreStats.length > 0
-    ? Math.max(...memberGenreStats.map(s => s.totalBooks))
-    : 0
-
-  // 전체 장르 수
-  const allGenres = new Set<string>()
-  books.forEach(b => b.genres?.forEach(g => allGenres.add(g)))
 
   // 책 검색 입력
   const renderBookSearchInput = (id: string) => (
@@ -440,14 +436,11 @@ export default function Books() {
     <div className="min-h-screen bg-background pb-16 sm:pb-0">
       <Navbar />
 
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         {/* 헤더 */}
         <div className="flex items-start justify-between mb-8">
           <div>
             <h1 className="text-2xl font-semibold text-foreground font-[family-name:var(--font-heading)]">책 관리</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              전체 {books.length}권 · {allGenres.size}개 장르
-            </p>
           </div>
           <Dialog open={isAddDialogOpen} onOpenChange={(open) => { setIsAddDialogOpen(open); if (!open) resetForm() }}>
             <DialogTrigger asChild>
@@ -566,7 +559,39 @@ export default function Books() {
           </div>
         ) : (
           <>
-            {/* 검색 + 필터 + 뷰 토글 */}
+            {/* 멤버별 독서 현황 */}
+            {memberStats.length > 0 && (
+              <div className="mb-10">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {memberStats.map((stat) => (
+                    <Card
+                      key={stat.memberId}
+                      className="cursor-pointer hover:border-muted-foreground/30 transition-colors"
+                      onClick={() => router.push(`/members/${stat.memberId}/books`)}
+                    >
+                      <CardContent className="p-4 flex flex-col items-center text-center">
+                        <Avatar className="h-12 w-12 mb-2">
+                          <AvatarImage src={stat.avatarUrl || ''} alt={stat.nickname} />
+                          <AvatarFallback className="bg-muted text-muted-foreground text-sm">
+                            {stat.nickname.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <p className="text-sm font-medium text-foreground">{stat.nickname}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {stat.topGenres.length > 0
+                            ? stat.topGenres.join(' · ')
+                            : '장르 없음'
+                          }
+                        </p>
+                        <p className="text-[10px] text-muted-foreground/60 mt-1">{stat.totalBooks}권</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 검색 + 필터 */}
             <div className="flex flex-col sm:flex-row gap-3 mb-6">
               <div className="relative flex-1 max-w-sm">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -589,23 +614,9 @@ export default function Books() {
                   ))}
                 </SelectContent>
               </Select>
-              <div className="flex border rounded-md">
-                <button
-                  onClick={() => setViewMode('card')}
-                  className={`px-3 py-2 ${viewMode === 'card' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'} rounded-l-md transition-colors`}
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`px-3 py-2 ${viewMode === 'list' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'} rounded-r-md transition-colors`}
-                >
-                  <List className="h-4 w-4" />
-                </button>
-              </div>
             </div>
 
-            {/* 책 목록 */}
+            {/* 책 리스트 */}
             {filteredBooks.length === 0 ? (
               <div className="text-center py-16">
                 <BookOpen className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
@@ -621,80 +632,8 @@ export default function Books() {
                   }
                 </p>
               </div>
-            ) : viewMode === 'card' ? (
-              /* 카드 그리드 뷰 */
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-12">
-                {filteredBooks.map((book) => (
-                  <Card key={book.id} className="overflow-hidden group">
-                    <CardContent className="p-0">
-                      {/* 썸네일 */}
-                      <div className="aspect-[3/4] bg-muted flex items-center justify-center overflow-hidden">
-                        {book.thumbnail ? (
-                          <img
-                            src={book.thumbnail}
-                            alt={book.title}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <BookOpen className="h-10 w-10 text-muted-foreground/30" />
-                        )}
-                      </div>
-
-                      {/* 정보 */}
-                      <div className="p-3">
-                        <p className="text-sm font-medium text-foreground leading-tight truncate">{book.title}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5 truncate">{book.author}</p>
-
-                        <div className="flex items-center justify-between mt-2">
-                          <div className="flex items-center gap-1.5">
-                            {book.rating > 0 ? (
-                              <div className="flex items-center gap-0.5">
-                                {Array.from({ length: book.rating }).map((_, i) => (
-                                  <Star key={i} className="h-2.5 w-2.5 fill-foreground text-foreground" />
-                                ))}
-                              </div>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">-</span>
-                            )}
-                          </div>
-                          <p className="text-[10px] text-muted-foreground truncate max-w-[60px]">
-                            {book.genres?.[0] || ''}
-                          </p>
-                        </div>
-
-                        <div className="flex items-center justify-between mt-2">
-                          <Avatar className="h-6 w-6" title={book.addedBy}>
-                            <AvatarImage src={book.addedByAvatarUrl || ''} alt={book.addedBy} />
-                            <AvatarFallback className="bg-muted text-muted-foreground text-[9px]">
-                              {book.addedBy.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <MoreHorizontal className="h-3.5 w-3.5" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleEditBook(book)}>
-                                <Edit className="h-3.5 w-3.5 mr-2" />
-                                수정
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleDeleteBook(book.id)} className="text-destructive focus:text-destructive">
-                                <Trash2 className="h-3.5 w-3.5 mr-2" />
-                                삭제
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
             ) : (
-              /* 리스트 뷰 */
-              <div className="border rounded-lg divide-y mb-12">
+              <div className="border rounded-lg divide-y">
                 {filteredBooks.map((book) => (
                   <div key={book.id} className="flex items-center gap-3 p-3 group hover:bg-muted/50 transition-colors">
                     {book.thumbnail ? (
@@ -751,46 +690,6 @@ export default function Books() {
                     </DropdownMenu>
                   </div>
                 ))}
-              </div>
-            )}
-
-            {/* 멤버별 독서 현황 */}
-            {memberGenreStats.length > 0 && (
-              <div className="mt-4">
-                <p className="text-xs tracking-widest uppercase text-muted-foreground mb-4">멤버별 독서 현황</p>
-                <div className="space-y-3">
-                  {memberGenreStats.map((stat) => (
-                    <div
-                      key={stat.member}
-                      className="flex items-center gap-4 p-3 rounded-lg border cursor-pointer hover:border-muted-foreground/30 transition-colors"
-                      onClick={() => router.push(`/members/${stat.memberId}/books`)}
-                    >
-                      <Avatar className="h-10 w-10 flex-shrink-0">
-                        <AvatarImage src={stat.avatarUrl || ''} alt={stat.member} />
-                        <AvatarFallback className="bg-muted text-muted-foreground text-sm">
-                          {stat.member.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <span className="text-sm font-medium text-foreground">{stat.member}</span>
-                          <span className="text-xs text-muted-foreground">{stat.totalBooks}권</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="h-1.5 bg-muted rounded-full flex-1 overflow-hidden">
-                            <div
-                              className="h-full bg-foreground rounded-full transition-all duration-500"
-                              style={{ width: `${(stat.totalBooks / maxMemberBooks) * 100}%` }}
-                            />
-                          </div>
-                          <span className="text-[10px] text-muted-foreground flex-shrink-0 w-24 truncate text-right">
-                            {stat.genres.slice(0, 2).map(g => g.genre).join(' · ')}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </div>
             )}
           </>
