@@ -236,8 +236,13 @@ export default function Meetings() {
     }
   }
 
+  const getNextMeetingTitle = () => {
+    const nextNumber = meetings.length + 1
+    return `아고나락 모임 ${nextNumber}차`
+  }
+
   const resetForm = () => {
-    setFormData({ title: '', date: '', time: '', location: '디스코드', memo: '', attendees: [] })
+    setFormData({ title: getNextMeetingTitle(), date: '', time: '', location: '디스코드', memo: '', attendees: [] })
     setError('')
   }
 
