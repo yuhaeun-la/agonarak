@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { ArrowLeft, BookOpen, Search, Star, Hash, BarChart3 } from 'lucide-react'
+import { StarRatingDisplay } from '@/components/ui/star-rating'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 interface Book {
@@ -220,10 +221,8 @@ export default function MemberBooksPage() {
                 <>
                   <p className="text-sm font-medium text-foreground truncate">{topRatedBook.title}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">{topRatedBook.author}</p>
-                  <div className="flex items-center gap-0.5 mt-1.5">
-                    {Array.from({ length: topRatedBook.rating }).map((_, i) => (
-                      <Star key={i} className="h-3 w-3 fill-foreground text-foreground" />
-                    ))}
+                  <div className="mt-1.5">
+                    <StarRatingDisplay rating={topRatedBook.rating} />
                   </div>
                 </>
               ) : (
@@ -280,10 +279,8 @@ export default function MemberBooksPage() {
                             <span className="text-xs text-muted-foreground w-8 flex-shrink-0">{book.month}월</span>
                             <span className="text-sm text-foreground truncate flex-1">{book.title}</span>
                             {book.rating > 0 && (
-                              <div className="flex items-center gap-0.5 flex-shrink-0">
-                                {Array.from({ length: book.rating }).map((_, i) => (
-                                  <Star key={i} className="h-2.5 w-2.5 fill-foreground text-foreground" />
-                                ))}
+                              <div className="flex-shrink-0">
+                                <StarRatingDisplay rating={book.rating} size="xs" />
                               </div>
                             )}
                           </div>
@@ -347,10 +344,8 @@ export default function MemberBooksPage() {
                       <p className="text-xs text-muted-foreground mt-0.5">{book.author}</p>
 
                       {book.rating > 0 && (
-                        <div className="flex items-center gap-0.5 mt-2">
-                          {Array.from({ length: book.rating }).map((_, i) => (
-                            <Star key={i} className="h-3 w-3 fill-foreground text-foreground" />
-                          ))}
+                        <div className="mt-2">
+                          <StarRatingDisplay rating={book.rating} />
                         </div>
                       )}
 

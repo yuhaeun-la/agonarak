@@ -23,7 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { ArrowLeft, BookOpen, Star, MapPin, CalendarDays, BarChart3, Edit, X } from 'lucide-react'
+import { ArrowLeft, BookOpen, MapPin, CalendarDays, BarChart3, Edit, X } from 'lucide-react'
+import { StarRatingDisplay } from '@/components/ui/star-rating'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { resizeImage } from '@/lib/resizeImage'
 import Link from 'next/link'
@@ -397,11 +398,7 @@ export default function MemberDetailPage() {
                   </div>
                   <div className="flex-shrink-0 hidden sm:block">
                     {book.rating > 0 ? (
-                      <div className="flex items-center gap-0.5">
-                        {Array.from({ length: book.rating }).map((_, i) => (
-                          <Star key={i} className="h-3 w-3 fill-foreground text-foreground" />
-                        ))}
-                      </div>
+                      <StarRatingDisplay rating={book.rating} />
                     ) : (
                       <span className="text-xs text-muted-foreground">-</span>
                     )}

@@ -30,7 +30,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Label } from '@/components/ui/label'
-import { BookOpen, Plus, Search, Filter, User, Edit, Trash2, Loader2, Star, MoreHorizontal } from 'lucide-react'
+import { BookOpen, Plus, Search, Filter, User, Edit, Trash2, Loader2, MoreHorizontal } from 'lucide-react'
+import { StarRatingDisplay, StarRatingInput } from '@/components/ui/star-rating'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useRouter } from 'next/navigation'
 
@@ -510,22 +511,8 @@ export default function Books() {
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label className="text-right">별점</Label>
-                    <div className="col-span-3 flex items-center gap-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          type="button"
-                          onClick={() => setFormData(prev => ({ ...prev, rating: prev.rating === star ? 0 : star }))}
-                          className="p-0.5"
-                        >
-                          <Star
-                            className={`h-5 w-5 ${star <= formData.rating ? 'fill-foreground text-foreground' : 'text-muted-foreground/30'}`}
-                          />
-                        </button>
-                      ))}
-                      {formData.rating > 0 && (
-                        <span className="text-xs text-muted-foreground ml-2">{formData.rating}점</span>
-                      )}
+                    <div className="col-span-3">
+                      <StarRatingInput rating={formData.rating} onChange={(value) => setFormData(prev => ({ ...prev, rating: value }))} />
                     </div>
                   </div>
                   <div className="grid grid-cols-4 items-start gap-4">
@@ -653,11 +640,7 @@ export default function Books() {
                     </div>
                     <div className="flex-shrink-0 hidden sm:block">
                       {book.rating > 0 ? (
-                        <div className="flex items-center gap-0.5">
-                          {Array.from({ length: book.rating }).map((_, i) => (
-                            <Star key={i} className="h-3 w-3 fill-foreground text-foreground" />
-                          ))}
-                        </div>
+                        <StarRatingDisplay rating={book.rating} />
                       ) : (
                         <span className="text-xs text-muted-foreground">-</span>
                       )}
@@ -744,22 +727,8 @@ export default function Books() {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label className="text-right">별점</Label>
-                <div className="col-span-3 flex items-center gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, rating: prev.rating === star ? 0 : star }))}
-                      className="p-0.5"
-                    >
-                      <Star
-                        className={`h-5 w-5 ${star <= formData.rating ? 'fill-foreground text-foreground' : 'text-muted-foreground/30'}`}
-                      />
-                    </button>
-                  ))}
-                  {formData.rating > 0 && (
-                    <span className="text-xs text-muted-foreground ml-2">{formData.rating}점</span>
-                  )}
+                <div className="col-span-3">
+                  <StarRatingInput rating={formData.rating} onChange={(value) => setFormData(prev => ({ ...prev, rating: value }))} />
                 </div>
               </div>
               <div className="grid grid-cols-4 items-start gap-4">

@@ -7,10 +7,10 @@ import {
   BookOpen,
   Clock,
   MapPin,
-  Star,
   ArrowRight,
 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { StarRatingDisplay } from '@/components/ui/star-rating'
 import { prisma } from '@/lib/prisma'
 
 const START_DATE = new Date('2022-03-19')
@@ -212,11 +212,7 @@ export default async function Home() {
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                <div className="flex items-center gap-0.5">
-                  {Array.from({ length: topRatedBook.rating }).map((_, i) => (
-                    <Star key={i} className="h-3 w-3 fill-foreground text-foreground" />
-                  ))}
-                </div>
+                <StarRatingDisplay rating={topRatedBook.rating} />
                 <Avatar className="h-5 w-5" title={topRatedBook.addedBy}>
                   <AvatarImage src={topRatedBook.addedByAvatarUrl || ''} alt={topRatedBook.addedBy} />
                   <AvatarFallback className="bg-muted text-muted-foreground text-[8px]">
