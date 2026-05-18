@@ -635,7 +635,7 @@ export default function Books() {
             ) : (
               <div className="border rounded-lg divide-y">
                 {filteredBooks.map((book) => (
-                  <div key={book.id} className="flex items-center gap-3 p-3 group hover:bg-muted/50 transition-colors">
+                  <div key={book.id} className="flex items-center gap-3 p-3 group hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => router.push(`/books/${book.id}`)}>
                     {book.thumbnail ? (
                       <img
                         src={book.thumbnail}
@@ -673,16 +673,16 @@ export default function Books() {
                     </Avatar>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEditBook(book)}>
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEditBook(book) }}>
                           <Edit className="h-3.5 w-3.5 mr-2" />
                           수정
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDeleteBook(book.id)} className="text-destructive focus:text-destructive">
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDeleteBook(book.id) }} className="text-destructive focus:text-destructive">
                           <Trash2 className="h-3.5 w-3.5 mr-2" />
                           삭제
                         </DropdownMenuItem>

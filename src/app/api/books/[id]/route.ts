@@ -1,6 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// GET - 책 상세 조회
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+
+    const book = await prisma.book.findUnique({
+      where: { id },
+      include: {
+        addedBy: { select: { id: true, nickname: true, avatarUrl: true } },
+        genres: { include: { genre: { select: { name: true } } } },
+      },
+    })
+
+    if (!book) {
+      return NextResponse.json({ error: 'Book not found' }, { status: 404 })
+    }
+
+    return NextResponse.json({
+      id: book.id,
+      title: book.title,
+      author: book.author,
+      notes: book.notes || '',
+      rating: book.rating || 0,
+      thumbnail: book.thumbnail || null,
+      registeredDate: book.registeredDate.toISOString(),
+      createdAt: book.createdAt.toISOString(),
+      genres: book.genres.map((bg) => bg.genre.name),
+      addedBy: book.addedBy?.nickname || 'Unknown',
+      addedByAvatarUrl: book.addedBy?.avatarUrl || null,
+      addedById: book.addedById || null,
+    })
+  } catch (error) {
+    console.error('Failed to fetch book:', error)
+    return NextResponse.json({ error: 'Failed to fetch book' }, { status: 500 })
+  }
+}
+
 // DELETE - 책 삭제
 export async function DELETE(
   request: NextRequest,
