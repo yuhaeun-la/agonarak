@@ -23,7 +23,7 @@ export default function RootLayout({
         />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
         />
       </head>
       <body className="antialiased" style={{ fontFamily: 'var(--font-pretendard)' }}>

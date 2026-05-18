@@ -47,7 +47,7 @@
 :root {
   --radius: 0.25rem;
   --font-pretendard: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
-  --font-fraunces: "Syne", sans-serif;
+  --font-fraunces: "Space Grotesk", sans-serif;
 
   --background: #fafafa;
   --foreground: #171717;
