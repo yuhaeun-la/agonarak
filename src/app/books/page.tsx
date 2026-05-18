@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Navbar } from '@/components/layout/navbar'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -17,22 +17,20 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Label } from '@/components/ui/label'
-import { BookOpen, Plus, Search, Filter, User, Calendar, BookMarked, Edit, Trash2, Loader2, Star } from 'lucide-react'
+import { BookOpen, Plus, Search, Filter, User, BookMarked, Edit, Trash2, Loader2, Star, LayoutGrid, List, MoreHorizontal } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useRouter } from 'next/navigation'
 
@@ -84,6 +82,7 @@ export default function Books() {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedGenre, setSelectedGenre] = useState('all')
+  const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [books, setBooks] = useState<Book[]>([])
@@ -93,7 +92,6 @@ export default function Books() {
   const [submitting, setSubmitting] = useState(false)
   const [editingBook, setEditingBook] = useState<Book | null>(null)
 
-  // 책 검색 관련 상태
   const [bookSearchQuery, setBookSearchQuery] = useState('')
   const [bookSearchResults, setBookSearchResults] = useState<SearchResult[]>([])
   const [isSearching, setIsSearching] = useState(false)
@@ -116,7 +114,6 @@ export default function Books() {
     Promise.all([fetchBooks(), fetchMembers()])
   }, [])
 
-  // 검색 결과 외부 클릭 시 닫기
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
@@ -154,7 +151,6 @@ export default function Books() {
     }
   }
 
-  // 책 검색 (디바운스)
   const searchBooks = useCallback(async (query: string) => {
     if (query.trim().length < 2) {
       setBookSearchResults([])
@@ -357,10 +353,7 @@ export default function Books() {
     }
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('ko-KR')
-  }
-
+  // 멤버별 통계
   const memberGenreStats = members.map(member => {
     const memberBooks = books.filter(book => book.addedBy === member.nickname)
     const uniqueBooks = new Map()
@@ -379,13 +372,23 @@ export default function Books() {
     })
 
     return {
+      memberId: member.id,
       member: member.nickname,
+      avatarUrl: member.avatarUrl,
       totalBooks: uniqueBooks.size,
       genres: Object.entries(genreCount).map(([genre, count]) => ({ genre, count })).sort((a, b) => b.count - a.count)
     }
   }).filter(stat => stat.totalBooks > 0)
 
-  // 책 검색 입력 + 드롭다운 (인라인 렌더링용)
+  const maxMemberBooks = memberGenreStats.length > 0
+    ? Math.max(...memberGenreStats.map(s => s.totalBooks))
+    : 0
+
+  // 전체 장르 수
+  const allGenres = new Set<string>()
+  books.forEach(b => b.genres?.forEach(g => allGenres.add(g)))
+
+  // 책 검색 입력
   const renderBookSearchInput = (id: string) => (
     <div ref={searchContainerRef} className="col-span-3 relative">
       <div className="relative">
@@ -437,115 +440,19 @@ export default function Books() {
     <div className="min-h-screen bg-background pb-16 sm:pb-0">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-xl font-medium text-foreground font-[family-name:var(--font-heading)] mb-1">책 관리</h1>
-          <p className="text-sm text-muted-foreground">아고나락에서 읽은 책들을 관리하고 기록을 남기세요.</p>
-        </div>
-
-        {error && (
-          <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded text-sm text-destructive">
-            {error}
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+        {/* 헤더 */}
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-semibold text-foreground font-[family-name:var(--font-heading)]">책 관리</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              전체 {books.length}권 · {allGenres.size}개 장르
+            </p>
           </div>
-        )}
-
-        {loading ? (
-          <div className="text-center py-16">
-            <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted-foreground mb-4" />
-            <p className="text-sm text-muted-foreground">데이터를 불러오는 중...</p>
-          </div>
-        ) : (
-        <>
-        {/* 멤버별 장르 통계 */}
-        <div className="mb-6">
-          <h2 className="text-sm font-medium mb-3">멤버별 장르 통계</h2>
-          {memberGenreStats.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-8">
-                <BookMarked className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-                <h3 className="text-sm font-medium text-foreground mb-2">장르 통계가 없습니다</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {members.length === 0
-                    ? '먼저 멤버를 추가한 후 책을 등록해보세요.'
-                    : '책을 추가하면 멤버별 장르 통계를 확인할 수 있습니다.'
-                  }
-                </p>
-                {members.length === 0 && (
-                  <p className="text-xs text-muted-foreground">멤버 관리 페이지에서 멤버를 먼저 등록해주세요.</p>
-                )}
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {memberGenreStats.map((memberStat) => {
-                const member = members.find(m => m.nickname === memberStat.member)
-                return (
-                  <Card
-                    key={memberStat.member}
-                    className="cursor-pointer hover:border-muted-foreground/30 transition-colors"
-                    onClick={() => member && router.push(`/members/${member.id}/books`)}
-                  >
-                    <CardHeader>
-                      <CardTitle className="text-sm flex items-center gap-2">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={member?.avatarUrl || ''} alt={memberStat.member} />
-                          <AvatarFallback className="bg-muted text-muted-foreground text-sm">
-                            {memberStat.member.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span>{memberStat.member}</span>
-                      </CardTitle>
-                      <CardDescription className="text-xs">
-                        총 {memberStat.totalBooks}권 추가
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        {memberStat.genres && memberStat.genres.length > 0 ? (
-                          memberStat.genres.slice(0, 3).map((genreStat) => (
-                            <div key={genreStat.genre} className="flex justify-between items-center">
-                              <span className="text-sm text-muted-foreground truncate flex-1 mr-2">{genreStat.genre}</span>
-                              <span className="text-xs text-muted-foreground">{genreStat.count}권</span>
-                            </div>
-                          ))
-                        ) : (
-                          <p className="text-sm text-muted-foreground">장르 정보 없음</p>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* 검색, 필터 및 추가 버튼 */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4 flex-1">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input placeholder="책 제목이나 저자 검색..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
-            </div>
-
-            <Select value={selectedGenre} onValueChange={setSelectedGenre}>
-              <SelectTrigger className="w-full sm:w-[200px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="장르 필터" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">모든 장르</SelectItem>
-                {genres.slice(1).map((genre) => (
-                  <SelectItem key={genre} value={genre}>{genre}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
           <Dialog open={isAddDialogOpen} onOpenChange={(open) => { setIsAddDialogOpen(open); if (!open) resetForm() }}>
             <DialogTrigger asChild>
-              <Button onClick={resetForm} disabled={members.length === 0}>
-                <Plus className="h-4 w-4 mr-2" />
+              <Button size="sm" onClick={resetForm} disabled={members.length === 0}>
+                <Plus className="h-4 w-4 mr-1" />
                 책 추가
               </Button>
             </DialogTrigger>
@@ -567,17 +474,14 @@ export default function Books() {
                     <Label htmlFor="title" className="text-right">제목 *</Label>
                     {renderBookSearchInput("title")}
                   </div>
-
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="author" className="text-right">저자 *</Label>
                     <Input id="author" value={formData.author} onChange={(e) => setFormData({ ...formData, author: e.target.value })} className="col-span-3" placeholder="저자를 입력하세요" />
                   </div>
-
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="registeredDate" className="text-right">등록일 *</Label>
                     <Input id="registeredDate" type="date" value={formData.registeredDate} onChange={(e) => setFormData({ ...formData, registeredDate: e.target.value })} className="col-span-3" />
                   </div>
-
                   <div className="grid grid-cols-4 items-start gap-4">
                     <Label className="text-right pt-2">추가자 *</Label>
                     <div className="col-span-3 space-y-2">
@@ -600,7 +504,6 @@ export default function Books() {
                       ))}
                     </div>
                   </div>
-
                   <div className="grid grid-cols-4 items-start gap-4">
                     <Label className="text-right pt-2">장르</Label>
                     <div className="col-span-3 grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
@@ -612,7 +515,6 @@ export default function Books() {
                       ))}
                     </div>
                   </div>
-
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label className="text-right">별점</Label>
                     <div className="col-span-3 flex items-center gap-1">
@@ -633,7 +535,6 @@ export default function Books() {
                       )}
                     </div>
                   </div>
-
                   <div className="grid grid-cols-4 items-start gap-4">
                     <Label htmlFor="notes" className="text-right pt-2">독서 노트</Label>
                     <Textarea id="notes" value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} className="col-span-3" placeholder="책에 대한 메모나 감상을 적어보세요..." rows={3} />
@@ -652,20 +553,66 @@ export default function Books() {
           </Dialog>
         </div>
 
-        {/* 책 목록 */}
-        <Card>
-          <CardHeader>
-            <CardTitle>책 목록</CardTitle>
-            <CardDescription>현재 {filteredBooks.length}권의 책이 등록되어 있습니다.</CardDescription>
-          </CardHeader>
-          <CardContent>
+        {error && (
+          <div className="mb-6 p-3 bg-destructive/10 border border-destructive/20 rounded text-sm text-destructive">
+            {error}
+          </div>
+        )}
+
+        {loading ? (
+          <div className="text-center py-16">
+            <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted-foreground mb-4" />
+            <p className="text-sm text-muted-foreground">데이터를 불러오는 중...</p>
+          </div>
+        ) : (
+          <>
+            {/* 검색 + 필터 + 뷰 토글 */}
+            <div className="flex flex-col sm:flex-row gap-3 mb-6">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="책 제목이나 저자 검색..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={selectedGenre} onValueChange={setSelectedGenre}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="장르 필터" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">모든 장르</SelectItem>
+                  {genres.slice(1).map((genre) => (
+                    <SelectItem key={genre} value={genre}>{genre}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex border rounded-md">
+                <button
+                  onClick={() => setViewMode('card')}
+                  className={`px-3 py-2 ${viewMode === 'card' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'} rounded-l-md transition-colors`}
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`px-3 py-2 ${viewMode === 'list' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'} rounded-r-md transition-colors`}
+                >
+                  <List className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* 책 목록 */}
             {filteredBooks.length === 0 ? (
-              <div className="text-center py-8">
+              <div className="text-center py-16">
                 <BookOpen className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
                 <h3 className="text-sm font-medium text-foreground mb-2">
                   {searchTerm || selectedGenre !== 'all' ? '검색 결과가 없습니다' : '등록된 책이 없습니다'}
                 </h3>
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-sm text-muted-foreground">
                   {searchTerm || selectedGenre !== 'all'
                     ? '다른 검색어나 필터를 시도해보세요.'
                     : members.length === 0
@@ -673,114 +620,180 @@ export default function Books() {
                       : '새로운 책을 추가해보세요.'
                   }
                 </p>
-                {!searchTerm && selectedGenre === 'all' && members.length > 0 && (
-                  <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button onClick={resetForm}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        첫 번째 책 추가
-                      </Button>
-                    </DialogTrigger>
-                  </Dialog>
-                )}
+              </div>
+            ) : viewMode === 'card' ? (
+              /* 카드 그리드 뷰 */
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-12">
+                {filteredBooks.map((book) => (
+                  <Card key={book.id} className="overflow-hidden group">
+                    <CardContent className="p-0">
+                      {/* 썸네일 */}
+                      <div className="aspect-[3/4] bg-muted flex items-center justify-center overflow-hidden">
+                        {book.thumbnail ? (
+                          <img
+                            src={book.thumbnail}
+                            alt={book.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <BookOpen className="h-10 w-10 text-muted-foreground/30" />
+                        )}
+                      </div>
+
+                      {/* 정보 */}
+                      <div className="p-3">
+                        <p className="text-sm font-medium text-foreground leading-tight truncate">{book.title}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">{book.author}</p>
+
+                        <div className="flex items-center justify-between mt-2">
+                          <div className="flex items-center gap-1.5">
+                            {book.rating > 0 ? (
+                              <div className="flex items-center gap-0.5">
+                                {Array.from({ length: book.rating }).map((_, i) => (
+                                  <Star key={i} className="h-2.5 w-2.5 fill-foreground text-foreground" />
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">-</span>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-muted-foreground truncate max-w-[60px]">
+                            {book.genres?.[0] || ''}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center justify-between mt-2">
+                          <Avatar className="h-6 w-6" title={book.addedBy}>
+                            <AvatarImage src={book.addedByAvatarUrl || ''} alt={book.addedBy} />
+                            <AvatarFallback className="bg-muted text-muted-foreground text-[9px]">
+                              {book.addedBy.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <MoreHorizontal className="h-3.5 w-3.5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleEditBook(book)}>
+                                <Edit className="h-3.5 w-3.5 mr-2" />
+                                수정
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleDeleteBook(book.id)} className="text-destructive focus:text-destructive">
+                                <Trash2 className="h-3.5 w-3.5 mr-2" />
+                                삭제
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             ) : (
-              <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>책 정보</TableHead>
-                    <TableHead>장르</TableHead>
-                    <TableHead>별점</TableHead>
-                    <TableHead>추가자</TableHead>
-                    <TableHead>등록일</TableHead>
-                    <TableHead>노트</TableHead>
-                    <TableHead>작업</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredBooks.map((book) => (
-                    <TableRow key={book.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          {book.thumbnail ? (
-                            <img
-                              src={book.thumbnail}
-                              alt={book.title}
-                              className="h-12 w-9 rounded object-cover bg-muted flex-shrink-0"
-                            />
-                          ) : (
-                            <div className="h-12 w-9 rounded bg-muted flex-shrink-0 flex items-center justify-center">
-                              <BookOpen className="h-4 w-4 text-muted-foreground" />
-                            </div>
-                          )}
-                          <div>
-                            <div className="font-medium">{book.title}</div>
-                            <div className="text-sm text-muted-foreground">{book.author}</div>
-                          </div>
+              /* 리스트 뷰 */
+              <div className="border rounded-lg divide-y mb-12">
+                {filteredBooks.map((book) => (
+                  <div key={book.id} className="flex items-center gap-3 p-3 group hover:bg-muted/50 transition-colors">
+                    {book.thumbnail ? (
+                      <img
+                        src={book.thumbnail}
+                        alt={book.title}
+                        className="h-12 w-9 rounded object-cover bg-muted flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="h-12 w-9 rounded bg-muted flex-shrink-0 flex items-center justify-center">
+                        <BookOpen className="h-4 w-4 text-muted-foreground/50" />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-foreground truncate">{book.title}</p>
+                      <p className="text-xs text-muted-foreground">{book.author}</p>
+                    </div>
+                    <div className="flex-shrink-0 hidden sm:block">
+                      {book.rating > 0 ? (
+                        <div className="flex items-center gap-0.5">
+                          {Array.from({ length: book.rating }).map((_, i) => (
+                            <Star key={i} className="h-3 w-3 fill-foreground text-foreground" />
+                          ))}
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-xs text-muted-foreground">
-                          {book.genres && book.genres.length > 0
-                            ? book.genres.join(' · ')
-                            : '장르 없음'}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        {book.rating > 0 ? (
-                          <div className="flex items-center gap-0.5">
-                            {Array.from({ length: book.rating }).map((_, i) => (
-                              <Star key={i} className="h-3 w-3 fill-foreground text-foreground" />
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Avatar className="h-10 w-10" title={book.addedBy}>
-                          <AvatarImage src={book.addedByAvatarUrl || ''} alt={book.addedBy} />
-                          <AvatarFallback className="bg-muted text-muted-foreground text-sm">
-                            {book.addedBy.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          {formatDate(book.registeredDate)}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {book.notes ? (
-                          <div className="text-sm text-muted-foreground max-w-xs truncate">{book.notes}</div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">노트 없음</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <Button variant="outline" size="sm" onClick={() => handleEditBook(book)}>
-                            <Edit className="h-3 w-3 mr-1" />
-                            수정
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleDeleteBook(book.id)} className="text-destructive hover:text-destructive">
-                            <Trash2 className="h-3 w-3 mr-1" />
-                            삭제
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">-</span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground flex-shrink-0 hidden sm:block w-20 truncate text-right">
+                      {book.genres?.[0] || ''}
+                    </p>
+                    <Avatar className="h-6 w-6 flex-shrink-0" title={book.addedBy}>
+                      <AvatarImage src={book.addedByAvatarUrl || ''} alt={book.addedBy} />
+                      <AvatarFallback className="bg-muted text-muted-foreground text-[9px]">
+                        {book.addedBy.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEditBook(book)}>
+                          <Edit className="h-3.5 w-3.5 mr-2" />
+                          수정
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDeleteBook(book.id)} className="text-destructive focus:text-destructive">
+                          <Trash2 className="h-3.5 w-3.5 mr-2" />
+                          삭제
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                ))}
               </div>
             )}
-          </CardContent>
-        </Card>
 
-        </>
+            {/* 멤버별 독서 현황 */}
+            {memberGenreStats.length > 0 && (
+              <div className="mt-4">
+                <p className="text-xs tracking-widest uppercase text-muted-foreground mb-4">멤버별 독서 현황</p>
+                <div className="space-y-3">
+                  {memberGenreStats.map((stat) => (
+                    <div
+                      key={stat.member}
+                      className="flex items-center gap-4 p-3 rounded-lg border cursor-pointer hover:border-muted-foreground/30 transition-colors"
+                      onClick={() => router.push(`/members/${stat.memberId}/books`)}
+                    >
+                      <Avatar className="h-10 w-10 flex-shrink-0">
+                        <AvatarImage src={stat.avatarUrl || ''} alt={stat.member} />
+                        <AvatarFallback className="bg-muted text-muted-foreground text-sm">
+                          {stat.member.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="text-sm font-medium text-foreground">{stat.member}</span>
+                          <span className="text-xs text-muted-foreground">{stat.totalBooks}권</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="h-1.5 bg-muted rounded-full flex-1 overflow-hidden">
+                            <div
+                              className="h-full bg-foreground rounded-full transition-all duration-500"
+                              style={{ width: `${(stat.totalBooks / maxMemberBooks) * 100}%` }}
+                            />
+                          </div>
+                          <span className="text-[10px] text-muted-foreground flex-shrink-0 w-24 truncate text-right">
+                            {stat.genres.slice(0, 2).map(g => g.genre).join(' · ')}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* 수정 다이얼로그 */}
@@ -796,17 +809,14 @@ export default function Books() {
                 <Label htmlFor="edit-title" className="text-right">제목 *</Label>
                 {renderBookSearchInput("edit-title")}
               </div>
-
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="edit-author" className="text-right">저자 *</Label>
                 <Input id="edit-author" value={formData.author} onChange={(e) => setFormData({ ...formData, author: e.target.value })} className="col-span-3" placeholder="저자를 입력하세요" />
               </div>
-
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="edit-registeredDate" className="text-right">등록일 *</Label>
                 <Input id="edit-registeredDate" type="date" value={formData.registeredDate} onChange={(e) => setFormData({ ...formData, registeredDate: e.target.value })} className="col-span-3" />
               </div>
-
               <div className="grid grid-cols-4 items-start gap-4">
                 <Label className="text-right pt-2">추가자</Label>
                 <Select value={formData.addedByIds[0] || ''} onValueChange={(value) => setFormData({ ...formData, addedByIds: [value] })}>
@@ -820,7 +830,6 @@ export default function Books() {
                   </SelectContent>
                 </Select>
               </div>
-
               <div className="grid grid-cols-4 items-start gap-4">
                 <Label className="text-right pt-2">장르</Label>
                 <div className="col-span-3 space-y-2">
@@ -834,7 +843,6 @@ export default function Books() {
                   </div>
                 </div>
               </div>
-
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label className="text-right">별점</Label>
                 <div className="col-span-3 flex items-center gap-1">
@@ -855,7 +863,6 @@ export default function Books() {
                   )}
                 </div>
               </div>
-
               <div className="grid grid-cols-4 items-start gap-4">
                 <Label htmlFor="edit-notes" className="text-right pt-2">메모</Label>
                 <Textarea id="edit-notes" value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} className="col-span-3" placeholder="책에 대한 메모를 작성해주세요" rows={3} />
