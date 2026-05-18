@@ -4,17 +4,9 @@ import React, { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { Navbar } from '@/components/layout/navbar'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { ArrowLeft, BookOpen, Search, Calendar, User, Star } from 'lucide-react'
+import { ArrowLeft, BookOpen, Search, Star, Hash, BarChart3 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 interface Book {
@@ -24,6 +16,7 @@ interface Book {
   genres: string[]
   notes: string
   rating: number
+  thumbnail: string | null
   registeredDate: string
   createdAt: string
   addedById: string | null
@@ -91,10 +84,6 @@ export default function MemberBooksPage() {
     book.genres.some(genre => genre.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('ko-KR')
-  }
-
   const uniqueBooks = new Map()
   books.forEach(book => {
     const bookKey = `${book.title}-${book.author}`
@@ -114,6 +103,26 @@ export default function MemberBooksPage() {
     .sort(([,a], [,b]) => (b as number) - (a as number))
     .slice(0, 5)
 
+  const maxGenreCount = topGenres.length > 0 ? (topGenres[0][1] as number) : 0
+
+  const ratedBooks = books.filter(b => b.rating > 0)
+  const avgRating = ratedBooks.length > 0
+    ? (ratedBooks.reduce((sum, b) => sum + b.rating, 0) / ratedBooks.length)
+    : 0
+
+  // 타임라인: 등록일 기준 연도-월 그룹핑
+  const timelineGroups = [...books]
+    .sort((a, b) => new Date(b.registeredDate).getTime() - new Date(a.registeredDate).getTime())
+    .reduce((acc, book) => {
+      const date = new Date(book.registeredDate)
+      const year = date.getFullYear()
+      const month = date.getMonth() + 1
+      const key = `${year}`
+      if (!acc[key]) acc[key] = []
+      acc[key].push({ ...book, month })
+      return acc
+    }, {} as Record<string, (Book & { month: number })[]>)
+
   if (loading && !member) {
     return (
       <div className="min-h-screen bg-background">
@@ -131,30 +140,11 @@ export default function MemberBooksPage() {
     <div className="min-h-screen bg-background pb-16 sm:pb-0">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <Button variant="outline" onClick={() => router.push('/books')} className="mb-4">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            책 관리로 돌아가기
-          </Button>
-
-          <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={member?.avatarUrl || ''} alt={member?.nickname || ''} />
-              <AvatarFallback className="bg-muted text-muted-foreground">
-                {member?.nickname?.charAt(0) || '?'}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h1 className="text-xl font-medium text-foreground font-[family-name:var(--font-heading)] mb-1">
-                {member?.nickname}님의 독서 내역
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                총 {uniqueBooks.size}권의 책을 읽었습니다. (전체 등록 {books.length}회)
-              </p>
-            </div>
-          </div>
-        </div>
+      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+        <Button variant="ghost" size="sm" onClick={() => router.push('/books')} className="mb-6 -ml-2 text-muted-foreground">
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          책 관리
+        </Button>
 
         {error && (
           <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded text-sm text-destructive">
@@ -162,141 +152,223 @@ export default function MemberBooksPage() {
           </div>
         )}
 
-        {/* 통계 카드 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">총 등록 도서</CardTitle>
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{uniqueBooks.size}</div>
-              <p className="text-xs text-muted-foreground">책 수 (전체 {books.length}회)</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">선호 장르</CardTitle>
-              <User className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{topGenres.length > 0 ? topGenres[0][0] : '-'}</div>
-              <p className="text-xs text-muted-foreground">{topGenres.length > 0 ? `${topGenres[0][1]}권` : '데이터 없음'}</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">장르 다양성</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{Object.keys(genreStats).length}</div>
-              <p className="text-xs text-muted-foreground">다룬 장르 수</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* 장르별 통계 */}
-        {topGenres.length > 0 && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>선호 장르 TOP 5</CardTitle>
-              <CardDescription>가장 많이 등록한 장르들입니다.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {topGenres.map(([genre, count]) => (
-                  <div key={genre} className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">{genre}</span>
-                    <span className="text-xs text-muted-foreground">{count as number}권</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* 검색 */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input placeholder="책 제목, 저자, 장르로 검색..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+        {/* 프로필 히어로 */}
+        <div className="mb-10">
+          <div className="flex items-center gap-4">
+            <Avatar className="h-16 w-16">
+              <AvatarImage src={member?.avatarUrl || ''} alt={member?.nickname || ''} />
+              <AvatarFallback className="bg-muted text-muted-foreground text-lg">
+                {member?.nickname?.charAt(0) || '?'}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h1 className="text-2xl font-semibold text-foreground font-[family-name:var(--font-heading)]">
+                {member?.nickname}님의 서재
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                총 {uniqueBooks.size}권 · {Object.keys(genreStats).length}개 장르{avgRating > 0 && ` · 평균 ${avgRating.toFixed(1)}점`}
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* 책 목록 */}
-        <Card>
-          <CardHeader>
-            <CardTitle>등록한 책 목록</CardTitle>
-            <CardDescription>현재 {filteredBooks.length}권의 책이 표시되고 있습니다.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-center py-8">
-                <div className="text-muted-foreground">책 데이터를 불러오는 중...</div>
+        {/* 통계 카드 4개 */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+          <Card>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs tracking-widest uppercase text-muted-foreground">총 도서</p>
+                <BookOpen className="h-4 w-4 text-muted-foreground/50" />
               </div>
-            ) : filteredBooks.length === 0 ? (
-              <div className="text-center py-8">
-                <BookOpen className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-                <h3 className="text-sm font-medium text-foreground mb-2">
-                  {searchTerm ? '검색 결과가 없습니다' : '등록한 책이 없습니다'}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {searchTerm ? '다른 검색어로 시도해보세요.' : '아직 등록한 책이 없습니다.'}
-                </p>
+              <div className="text-3xl font-normal font-[family-name:var(--font-heading)]">{uniqueBooks.size}</div>
+              <p className="text-xs text-muted-foreground mt-1">전체 {books.length}회 등록</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs tracking-widest uppercase text-muted-foreground">선호 장르</p>
+                <Hash className="h-4 w-4 text-muted-foreground/50" />
               </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>제목</TableHead>
-                    <TableHead>저자</TableHead>
-                    <TableHead>장르</TableHead>
-                    <TableHead>별점</TableHead>
-                    <TableHead>등록일</TableHead>
-                    <TableHead>메모</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredBooks.map((book) => (
-                    <TableRow key={book.id}>
-                      <TableCell className="font-medium">{book.title}</TableCell>
-                      <TableCell>{book.author}</TableCell>
-                      <TableCell>
-                        <span className="text-xs text-muted-foreground">
-                          {book.genres.length > 0 ? book.genres.join(' · ') : '장르 없음'}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        {book.rating > 0 ? (
-                          <div className="flex items-center gap-0.5">
-                            {Array.from({ length: book.rating }).map((_, i) => (
-                              <Star key={i} className="h-3 w-3 fill-foreground text-foreground" />
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">{formatDate(book.registeredDate)}</div>
-                      </TableCell>
-                      <TableCell>
-                        {book.notes ? (
-                          <div className="text-sm text-muted-foreground max-w-xs truncate">{book.notes}</div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">메모 없음</span>
-                        )}
-                      </TableCell>
-                    </TableRow>
+              <div className="text-3xl font-normal font-[family-name:var(--font-heading)] truncate">
+                {topGenres.length > 0 ? topGenres[0][0] : '-'}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {topGenres.length > 0 ? `${topGenres[0][1]}권` : '데이터 없음'}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs tracking-widest uppercase text-muted-foreground">장르 수</p>
+                <BarChart3 className="h-4 w-4 text-muted-foreground/50" />
+              </div>
+              <div className="text-3xl font-normal font-[family-name:var(--font-heading)]">{Object.keys(genreStats).length}</div>
+              <p className="text-xs text-muted-foreground mt-1">다룬 장르</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs tracking-widest uppercase text-muted-foreground">평균 별점</p>
+                <Star className="h-4 w-4 text-muted-foreground/50" />
+              </div>
+              <div className="text-3xl font-normal font-[family-name:var(--font-heading)]">
+                {avgRating > 0 ? avgRating.toFixed(1) : '-'}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {ratedBooks.length > 0 ? `${ratedBooks.length}권 평가` : '평가 없음'}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* 장르 분포 + 독서 타임라인 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-10">
+
+          {/* 장르 분포 바 차트 */}
+          {topGenres.length > 0 && (
+            <Card>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-sm font-medium">장르 분포</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {topGenres.map(([genre, count]) => (
+                    <div key={genre}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm text-foreground">{genre}</span>
+                        <span className="text-xs text-muted-foreground">{count as number}권</span>
+                      </div>
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-foreground rounded-full transition-all duration-500"
+                          style={{ width: `${((count as number) / maxGenreCount) * 100}%` }}
+                        />
+                      </div>
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 독서 타임라인 */}
+          {Object.keys(timelineGroups).length > 0 && (
+            <Card>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-sm font-medium">독서 타임라인</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-5">
+                  {Object.entries(timelineGroups).map(([year, yearBooks]) => (
+                    <div key={year}>
+                      <p className="text-xs tracking-widest uppercase text-muted-foreground mb-3">{year}</p>
+                      <div className="space-y-2 border-l border-border pl-4">
+                        {yearBooks.map((book) => (
+                          <div key={book.id} className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground w-8 flex-shrink-0">{book.month}월</span>
+                            <span className="text-sm text-foreground truncate flex-1">{book.title}</span>
+                            {book.rating > 0 && (
+                              <div className="flex items-center gap-0.5 flex-shrink-0">
+                                {Array.from({ length: book.rating }).map((_, i) => (
+                                  <Star key={i} className="h-2.5 w-2.5 fill-foreground text-foreground" />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* 검색 */}
+        <div className="mb-6">
+          <div className="relative max-w-sm">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="책 제목, 저자, 장르로 검색..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+
+        {/* 책 카드 그리드 */}
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="text-muted-foreground">책 데이터를 불러오는 중...</div>
+          </div>
+        ) : filteredBooks.length === 0 ? (
+          <div className="text-center py-12">
+            <BookOpen className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+            <h3 className="text-sm font-medium text-foreground mb-2">
+              {searchTerm ? '검색 결과가 없습니다' : '등록한 책이 없습니다'}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {searchTerm ? '다른 검색어로 시도해보세요.' : '아직 등록한 책이 없습니다.'}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredBooks.map((book) => (
+              <Card key={book.id} className="overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="flex gap-4 p-4">
+                    {book.thumbnail ? (
+                      <img
+                        src={book.thumbnail}
+                        alt={book.title}
+                        className="h-24 w-16 rounded object-cover bg-muted flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="h-24 w-16 rounded bg-muted flex-shrink-0 flex items-center justify-center">
+                        <BookOpen className="h-6 w-6 text-muted-foreground/50" />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1 flex flex-col">
+                      <p className="text-sm font-medium text-foreground leading-tight truncate">{book.title}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{book.author}</p>
+
+                      {book.rating > 0 && (
+                        <div className="flex items-center gap-0.5 mt-2">
+                          {Array.from({ length: book.rating }).map((_, i) => (
+                            <Star key={i} className="h-3 w-3 fill-foreground text-foreground" />
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="mt-auto pt-2 flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">
+                          {book.genres.slice(0, 2).join(' · ')}
+                          {book.genres.length > 2 && ` +${book.genres.length - 2}`}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(book.registeredDate).toLocaleDateString('ko-KR', { year: '2-digit', month: 'short' })}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  {book.notes && (
+                    <div className="px-4 pb-3 pt-0">
+                      <p className="text-xs text-muted-foreground truncate border-t border-border pt-2">{book.notes}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
