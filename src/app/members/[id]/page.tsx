@@ -6,8 +6,26 @@ import { Navbar } from '@/components/layout/navbar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, BookOpen, Star, MapPin, CalendarDays, BarChart3 } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { ArrowLeft, BookOpen, Star, MapPin, CalendarDays, BarChart3, Edit, X } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { resizeImage } from '@/lib/resizeImage'
 import Link from 'next/link'
 
 interface Book {
@@ -55,6 +73,17 @@ export default function MemberDetailPage() {
   const [meetings, setMeetings] = useState<Meeting[]>([])
   const [loading, setLoading] = useState(true)
 
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+  const [formData, setFormData] = useState({
+    nickname: '',
+    role: 'MEMBER' as 'LEADER' | 'MEMBER',
+    contact: '',
+    avatarUrl: null as string | null,
+  })
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+
   useEffect(() => {
     if (memberId) {
       Promise.all([fetchMember(), fetchBooks(), fetchMeetings()]).finally(() => setLoading(false))
@@ -92,6 +121,66 @@ export default function MemberDetailPage() {
       setMeetings(allMeetings)
     } catch (error) {
       console.error('Error fetching meetings:', error)
+    }
+  }
+
+  const handleOpenEdit = () => {
+    if (!member) return
+    setFormData({
+      nickname: member.nickname,
+      role: member.role,
+      contact: member.contact || '',
+      avatarUrl: member.avatarUrl,
+    })
+    setAvatarPreview(member.avatarUrl)
+    setError('')
+    setIsEditDialogOpen(true)
+  }
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) { setError('이미지 파일만 업로드할 수 있습니다.'); return }
+    try {
+      const dataUrl = await resizeImage(file, 100, 0.7)
+      setAvatarPreview(dataUrl)
+      setFormData(prev => ({ ...prev, avatarUrl: dataUrl }))
+    } catch {
+      setError('이미지 처리에 실패했습니다.')
+    }
+  }
+
+  const handleRemoveAvatar = () => {
+    setAvatarPreview(null)
+    setFormData(prev => ({ ...prev, avatarUrl: null }))
+  }
+
+  const handleUpdateMember = async () => {
+    if (!formData.nickname.trim()) { setError('닉네임은 필수입니다.'); return }
+    try {
+      setSubmitting(true)
+      const response = await fetch(`/api/members/${memberId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nickname: formData.nickname.trim(),
+          role: formData.role,
+          contact: formData.contact.trim(),
+          avatarUrl: formData.avatarUrl,
+        }),
+      })
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to update member')
+      }
+      await fetchMember()
+      setIsEditDialogOpen(false)
+      setError('')
+    } catch (error: unknown) {
+      console.error('Error updating member:', error)
+      setError(error instanceof Error ? error.message : '멤버 수정에 실패했습니다.')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -181,6 +270,10 @@ export default function MemberDetailPage() {
           {member.contact && (
             <p className="text-sm text-muted-foreground">{member.contact}</p>
           )}
+          <Button variant="outline" size="sm" className="mt-3" onClick={handleOpenEdit}>
+            <Edit className="h-3.5 w-3.5 mr-1" />
+            수정
+          </Button>
         </div>
 
         {/* 활동 요약 3카드 */}
@@ -326,6 +419,67 @@ export default function MemberDetailPage() {
             </div>
           </div>
         )}
+
+        {/* 수정 다이얼로그 */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>멤버 정보 수정</DialogTitle>
+              <DialogDescription>멤버의 정보를 수정해주세요.</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-nickname" className="text-right">닉네임</Label>
+                <Input id="edit-nickname" value={formData.nickname} onChange={(e) => setFormData({ ...formData, nickname: e.target.value })} className="col-span-3" placeholder="닉네임을 입력하세요" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right">프로필 사진</Label>
+                <div className="col-span-3 flex items-center gap-3">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={avatarPreview || ''} alt="미리보기" />
+                    <AvatarFallback className="bg-muted text-muted-foreground">
+                      {formData.nickname ? formData.nickname.charAt(0) : '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 flex items-center gap-2">
+                    <Input type="file" accept="image/*" onChange={handleAvatarChange} className="flex-1 text-sm" />
+                    {avatarPreview && (
+                      <Button type="button" variant="outline" size="icon" onClick={handleRemoveAvatar} className="h-8 w-8 shrink-0">
+                        <X className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-role" className="text-right">역할</Label>
+                <Select value={formData.role} onValueChange={(value: 'LEADER' | 'MEMBER') => setFormData({ ...formData, role: value })}>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="역할을 선택하세요" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="MEMBER">일반 멤버</SelectItem>
+                    <SelectItem value="LEADER">리더</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-contact" className="text-right">연락처</Label>
+                <Input id="edit-contact" value={formData.contact} onChange={(e) => setFormData({ ...formData, contact: e.target.value })} className="col-span-3" placeholder="010-1234-5678" />
+              </div>
+            </div>
+            {error && (
+              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded text-sm text-destructive">
+                {error}
+              </div>
+            )}
+            <DialogFooter>
+              <Button type="submit" onClick={handleUpdateMember} disabled={submitting}>
+                {submitting ? '수정 중...' : '수정 완료'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )
