@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { Navbar } from '@/components/layout/navbar'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -16,6 +16,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -24,16 +30,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { Phone, Users, UserPlus, Search, Edit, Trash2, X } from 'lucide-react'
+import { Users, UserPlus, Search, Edit, Trash2, X, MoreHorizontal } from 'lucide-react'
 import { resizeImage } from '@/lib/resizeImage'
+import { useRouter } from 'next/navigation'
 
 interface Member {
   id: string
@@ -49,6 +48,7 @@ interface Member {
 }
 
 export default function Members() {
+  const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -209,69 +209,66 @@ export default function Members() {
     setError('')
   }
 
+  // 다이얼로그 폼
+  const renderFormFields = (prefix: string) => (
+    <div className="grid gap-4 py-4">
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor={`${prefix}-nickname`} className="text-right">닉네임</Label>
+        <Input id={`${prefix}-nickname`} value={formData.nickname} onChange={(e) => setFormData({ ...formData, nickname: e.target.value })} className="col-span-3" placeholder="닉네임을 입력하세요" />
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label className="text-right">프로필 사진</Label>
+        <div className="col-span-3 flex items-center gap-3">
+          <Avatar className="h-12 w-12">
+            <AvatarImage src={avatarPreview || ''} alt="미리보기" />
+            <AvatarFallback className="bg-muted text-muted-foreground">
+              {formData.nickname ? formData.nickname.charAt(0) : '?'}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 flex items-center gap-2">
+            <Input type="file" accept="image/*" onChange={handleAvatarChange} className="flex-1 text-sm" />
+            {avatarPreview && (
+              <Button type="button" variant="outline" size="icon" onClick={handleRemoveAvatar} className="h-8 w-8 shrink-0">
+                <X className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor={`${prefix}-role`} className="text-right">역할</Label>
+        <Select value={formData.role} onValueChange={(value: 'LEADER' | 'MEMBER') => setFormData({ ...formData, role: value })}>
+          <SelectTrigger className="col-span-3">
+            <SelectValue placeholder="역할을 선택하세요" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="MEMBER">일반 멤버</SelectItem>
+            <SelectItem value="LEADER">리더</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor={`${prefix}-contact`} className="text-right">연락처</Label>
+        <Input id={`${prefix}-contact`} value={formData.contact} onChange={(e) => setFormData({ ...formData, contact: e.target.value })} className="col-span-3" placeholder="010-1234-5678" />
+      </div>
+    </div>
+  )
+
   return (
     <div className="min-h-screen bg-background pb-16 sm:pb-0">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-xl font-medium text-foreground font-[family-name:var(--font-heading)] mb-1">멤버 관리</h1>
-          <p className="text-sm text-muted-foreground">아고나락 멤버들을 관리하고 정보를 확인하세요.</p>
-        </div>
-
-        {error && (
-          <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded text-sm text-destructive">
-            {error}
+      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+        {/* 헤더 */}
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-semibold text-foreground font-[family-name:var(--font-heading)]">멤버 관리</h1>
+            <p className="text-sm text-muted-foreground mt-1">{members.length}명의 멤버</p>
           </div>
-        )}
-
-        {/* 통계 카드 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">전체 멤버</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{members.length}</div>
-              <p className="text-xs text-muted-foreground">활성 멤버 수</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">리더</CardTitle>
-              <UserPlus className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{members.filter(m => m.role === 'LEADER').length}</div>
-              <p className="text-xs text-muted-foreground">리더 역할 멤버</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">일반 멤버</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{members.filter(m => m.role === 'MEMBER').length}</div>
-              <p className="text-xs text-muted-foreground">일반 멤버</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* 검색 및 추가 버튼 */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input placeholder="멤버 검색..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
-          </div>
-
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={resetForm}>
-                <UserPlus className="h-4 w-4 mr-2" />
+              <Button size="sm" onClick={resetForm}>
+                <UserPlus className="h-4 w-4 mr-1" />
                 멤버 추가
               </Button>
             </DialogTrigger>
@@ -280,47 +277,7 @@ export default function Members() {
                 <DialogTitle>새 멤버 추가</DialogTitle>
                 <DialogDescription>새로운 멤버의 정보를 입력해주세요.</DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="nickname" className="text-right">닉네임</Label>
-                  <Input id="nickname" value={formData.nickname} onChange={(e) => setFormData({ ...formData, nickname: e.target.value })} className="col-span-3" placeholder="닉네임을 입력하세요" />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right">프로필 사진</Label>
-                  <div className="col-span-3 flex items-center gap-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={avatarPreview || ''} alt="미리보기" />
-                      <AvatarFallback className="bg-muted text-muted-foreground">
-                        {formData.nickname ? formData.nickname.charAt(0) : '?'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 flex items-center gap-2">
-                      <Input type="file" accept="image/*" onChange={handleAvatarChange} className="flex-1 text-sm" />
-                      {avatarPreview && (
-                        <Button type="button" variant="outline" size="icon" onClick={handleRemoveAvatar} className="h-8 w-8 shrink-0">
-                          <X className="h-3 w-3" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="role" className="text-right">역할</Label>
-                  <Select value={formData.role} onValueChange={(value: 'LEADER' | 'MEMBER') => setFormData({ ...formData, role: value })}>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="역할을 선택하세요" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="MEMBER">일반 멤버</SelectItem>
-                      <SelectItem value="LEADER">리더</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="contact" className="text-right">연락처</Label>
-                  <Input id="contact" value={formData.contact} onChange={(e) => setFormData({ ...formData, contact: e.target.value })} className="col-span-3" placeholder="010-1234-5678" />
-                </div>
-              </div>
+              {renderFormFields('add')}
               <DialogFooter>
                 <Button type="submit" onClick={handleAddMember} disabled={submitting}>
                   {submitting ? '추가 중...' : '멤버 추가'}
@@ -330,108 +287,111 @@ export default function Members() {
           </Dialog>
         </div>
 
-        {/* 멤버 목록 */}
-        <Card>
-          <CardHeader>
-            <CardTitle>멤버 목록</CardTitle>
-            <CardDescription>현재 {filteredMembers.length}명의 멤버가 있습니다.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-center py-8">
-                <div className="text-muted-foreground">멤버 데이터를 불러오는 중...</div>
-              </div>
-            ) : filteredMembers.length === 0 ? (
-              <div className="text-center py-8">
-                <Users className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-                <h3 className="text-sm font-medium text-foreground mb-2">
-                  {searchTerm ? '검색 결과가 없습니다' : '등록된 멤버가 없습니다'}
-                </h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {searchTerm ? '다른 검색어로 시도해보세요.' : '새로운 멤버를 추가해보세요.'}
-                </p>
-                {!searchTerm && (
-                  <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button onClick={resetForm}>
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        첫 번째 멤버 추가
-                      </Button>
-                    </DialogTrigger>
-                  </Dialog>
-                )}
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>멤버</TableHead>
-                    <TableHead>역할</TableHead>
-                    <TableHead>연락처</TableHead>
-                    <TableHead>참석률</TableHead>
-                    <TableHead>작업</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredMembers.map((member) => (
-                    <TableRow key={member.id}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center space-x-3">
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage src={member.avatarUrl || ''} alt={member.nickname} />
-                            <AvatarFallback className="bg-muted text-muted-foreground text-sm">
-                              {member.nickname.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium">{member.nickname}</div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={member.role === 'LEADER' ? 'default' : 'secondary'}>
-                          {member.role === 'LEADER' ? '리더' : '멤버'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Phone className="h-3 w-3 mr-1" />
-                          {member.contact || '연락처 없음'}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {member.attendanceStats ? (
-                            <div>
-                              <div className="font-medium">{member.attendanceStats.attendanceRate.toFixed(1)}%</div>
-                              <div className="text-muted-foreground text-xs">
-                                {member.attendanceStats.attendedMeetings}/{member.attendanceStats.totalMeetings}
-                              </div>
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground">데이터 없음</span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <Button variant="outline" size="sm" onClick={() => handleEditMember(member)}>
-                            <Edit className="h-3 w-3 mr-1" />
-                            수정
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleDeleteMember(member.id)} className="text-destructive hover:text-destructive">
-                            <Trash2 className="h-3 w-3 mr-1" />
-                            삭제
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+        {error && (
+          <div className="mb-6 p-3 bg-destructive/10 border border-destructive/20 rounded text-sm text-destructive">
+            {error}
+          </div>
+        )}
+
+        {/* 검색 */}
+        {members.length > 0 && (
+          <div className="mb-6">
+            <div className="relative max-w-sm">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="멤버 검색..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* 멤버 카드 그리드 */}
+        {loading ? (
+          <div className="text-center py-16">
+            <div className="text-muted-foreground">멤버 데이터를 불러오는 중...</div>
+          </div>
+        ) : filteredMembers.length === 0 ? (
+          <div className="text-center py-16">
+            <Users className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+            <h3 className="text-sm font-medium text-foreground mb-2">
+              {searchTerm ? '검색 결과가 없습니다' : '등록된 멤버가 없습니다'}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {searchTerm ? '다른 검색어로 시도해보세요.' : '새로운 멤버를 추가해보세요.'}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredMembers.map((member) => (
+              <Card
+                key={member.id}
+                className="cursor-pointer hover:border-muted-foreground/30 transition-colors"
+                onClick={() => router.push(`/members/${member.id}`)}
+              >
+                <CardContent className="p-5 relative">
+                  {/* 더보기 메뉴 */}
+                  <div className="absolute top-3 right-3">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEditMember(member) }}>
+                          <Edit className="h-3.5 w-3.5 mr-2" />
+                          수정
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => { e.stopPropagation(); handleDeleteMember(member.id) }}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="h-3.5 w-3.5 mr-2" />
+                          삭제
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+
+                  {/* 프로필 */}
+                  <div className="flex flex-col items-center text-center">
+                    <Avatar className="h-14 w-14 mb-3">
+                      <AvatarImage src={member.avatarUrl || ''} alt={member.nickname} />
+                      <AvatarFallback className="bg-muted text-muted-foreground text-lg">
+                        {member.nickname.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <p className="text-sm font-medium text-foreground">{member.nickname}</p>
+                      {member.role === 'LEADER' && (
+                        <Badge variant="default" className="text-[10px] px-1.5 py-0">리더</Badge>
+                      )}
+                    </div>
+
+                    {member.attendanceStats && member.attendanceStats.totalMeetings > 0 && (
+                      <div className="mt-2">
+                        <p className="text-xs text-muted-foreground">
+                          참석률 {member.attendanceStats.attendanceRate.toFixed(0)}%
+                        </p>
+                        <p className="text-[10px] text-muted-foreground/60">
+                          {member.attendanceStats.attendedMeetings}/{member.attendanceStats.totalMeetings}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
         {/* 수정 다이얼로그 */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -440,47 +400,7 @@ export default function Members() {
               <DialogTitle>멤버 정보 수정</DialogTitle>
               <DialogDescription>멤버의 정보를 수정해주세요.</DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-nickname" className="text-right">닉네임</Label>
-                <Input id="edit-nickname" value={formData.nickname} onChange={(e) => setFormData({ ...formData, nickname: e.target.value })} className="col-span-3" placeholder="닉네임을 입력하세요" />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">프로필 사진</Label>
-                <div className="col-span-3 flex items-center gap-3">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={avatarPreview || ''} alt="미리보기" />
-                    <AvatarFallback className="bg-muted text-muted-foreground">
-                      {formData.nickname ? formData.nickname.charAt(0) : '?'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 flex items-center gap-2">
-                    <Input type="file" accept="image/*" onChange={handleAvatarChange} className="flex-1 text-sm" />
-                    {avatarPreview && (
-                      <Button type="button" variant="outline" size="icon" onClick={handleRemoveAvatar} className="h-8 w-8 shrink-0">
-                        <X className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-role" className="text-right">역할</Label>
-                <Select value={formData.role} onValueChange={(value: 'LEADER' | 'MEMBER') => setFormData({ ...formData, role: value })}>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="역할을 선택하세요" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="MEMBER">일반 멤버</SelectItem>
-                    <SelectItem value="LEADER">리더</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-contact" className="text-right">연락처</Label>
-                <Input id="edit-contact" value={formData.contact} onChange={(e) => setFormData({ ...formData, contact: e.target.value })} className="col-span-3" placeholder="010-1234-5678" />
-              </div>
-            </div>
+            {renderFormFields('edit')}
             <DialogFooter>
               <Button type="submit" onClick={handleUpdateMember} disabled={submitting}>
                 {submitting ? '수정 중...' : '수정 완료'}
