@@ -237,8 +237,15 @@ export default function Meetings() {
   }
 
   const getNextMeetingTitle = () => {
-    const nextNumber = meetings.length + 1
-    return `아고나락 모임 ${nextNumber}차`
+    let maxNumber = 0
+    meetings.forEach(m => {
+      const match = m.title.match(/(\d+)차/)
+      if (match) {
+        const num = parseInt(match[1], 10)
+        if (num > maxNumber) maxNumber = num
+      }
+    })
+    return `아고나락 모임 ${maxNumber + 1}차`
   }
 
   const resetForm = () => {
