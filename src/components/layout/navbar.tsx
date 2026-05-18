@@ -12,6 +12,11 @@ const navItems = [
   { href: '/members', label: '멤버 관리', icon: Users },
 ]
 
+function isActiveRoute(pathname: string, href: string) {
+  if (href === '/') return pathname === '/'
+  return pathname === href || pathname.startsWith(href + '/')
+}
+
 export function Navbar() {
   const pathname = usePathname()
 
@@ -23,13 +28,13 @@ export function Navbar() {
           <div className="flex h-14 justify-between">
             <div className="flex">
               <div className="flex flex-shrink-0 items-center">
-                <Link href="/" className="text-xl font-normal text-foreground font-[family-name:var(--font-heading)]">
+                <Link href="/" className="text-xl font-normal text-foreground font-[family-name:var(--font-heading)] py-2 -my-2">
                   아고나락
                 </Link>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:space-x-6">
                 {navItems.map((item) => {
-                  const isActive = pathname === item.href
+                  const isActive = isActiveRoute(pathname, item.href)
                   return (
                     <Link
                       key={item.href}
@@ -56,7 +61,7 @@ export function Navbar() {
       <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t">
         <div className="flex justify-around items-center h-14">
           {navItems.map((item) => {
-            const isActive = pathname === item.href
+            const isActive = isActiveRoute(pathname, item.href)
             return (
               <Link
                 key={item.href}
