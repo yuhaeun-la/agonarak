@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { Navbar } from '@/components/layout/navbar'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -18,22 +17,20 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Label } from '@/components/ui/label'
-import { CalendarDays, MapPin, Clock, Plus, Search, Users, Calendar, Trash2, Edit } from 'lucide-react'
+import { CalendarDays, MapPin, Clock, Plus, Search, Edit, Trash2, MoreHorizontal, Users } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 interface Meeting {
@@ -119,6 +116,7 @@ export default function Meetings() {
     const searchLower = searchTerm.toLowerCase()
     return meeting.location.toLowerCase().includes(searchLower) ||
            meeting.memo.toLowerCase().includes(searchLower) ||
+           meeting.title.toLowerCase().includes(searchLower) ||
            meeting.books.some(book =>
              book.title.toLowerCase().includes(searchLower) ||
              book.author.toLowerCase().includes(searchLower)
@@ -251,88 +249,134 @@ export default function Meetings() {
     }
   }
 
-  const formatDateTime = (dateString: string) => {
+  const formatDateLarge = (dateString: string) => {
     const date = new Date(dateString)
     return {
       date: date.toLocaleDateString('ko-KR', {
-        year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
+        month: 'long', day: 'numeric', weekday: 'long'
+      }),
+      time: date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+    }
+  }
+
+  const formatDateCompact = (dateString: string) => {
+    const date = new Date(dateString)
+    return {
+      date: date.toLocaleDateString('ko-KR', {
+        month: 'short', day: 'numeric', weekday: 'short'
       }),
       time: date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
     }
   }
 
   const now = new Date()
-  const upcomingMeetings = filteredMeetings.filter(meeting => new Date(meeting.date) >= now)
-  const pastMeetings = filteredMeetings.filter(meeting => new Date(meeting.date) < now)
+  const upcomingMeetings = filteredMeetings
+    .filter(meeting => new Date(meeting.date) >= now)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  const pastMeetings = filteredMeetings
+    .filter(meeting => new Date(meeting.date) < now)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+  const nextMeeting = upcomingMeetings[0] || null
+  const restUpcoming = upcomingMeetings.slice(1)
+
+  // 지난 모임 연도별 그룹핑
+  const pastByYear = pastMeetings.reduce((acc, meeting) => {
+    const year = new Date(meeting.date).getFullYear().toString()
+    if (!acc[year]) acc[year] = []
+    acc[year].push(meeting)
+    return acc
+  }, {} as Record<string, Meeting[]>)
+
+  const getAttendingCount = (meeting: Meeting) =>
+    meeting.attendances.filter(a => a.status === 'ATTENDING').length
+
+  const getAttendingMembers = (meeting: Meeting) =>
+    meeting.attendances.filter(a => a.status === 'ATTENDING')
+
+  // 다이얼로그 폼 렌더링
+  const renderFormFields = (prefix: string) => (
+    <div className="grid gap-4 py-4">
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor={`${prefix}-title`} className="text-right">제목</Label>
+        <Input id={`${prefix}-title`} value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="col-span-3" placeholder="모임 제목을 입력하세요" />
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor={`${prefix}-date`} className="text-right">날짜 *</Label>
+        <Input id={`${prefix}-date`} type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="col-span-3" />
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor={`${prefix}-time`} className="text-right">시간 *</Label>
+        <Input id={`${prefix}-time`} type="time" value={formData.time} onChange={(e) => setFormData({ ...formData, time: e.target.value })} className="col-span-3" />
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label className="text-right">장소</Label>
+        <div className="col-span-3 space-y-2">
+          <Select
+            value={locationType}
+            onValueChange={(value) => {
+              setFormData({ ...formData, location: value === '기타' ? '' : value })
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="디스코드">디스코드</SelectItem>
+              <SelectItem value="오프라인">오프라인</SelectItem>
+              <SelectItem value="기타">기타</SelectItem>
+            </SelectContent>
+          </Select>
+          {locationType === '기타' && (
+            <Input
+              value={formData.location}
+              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+              placeholder="장소를 입력하세요"
+            />
+          )}
+        </div>
+      </div>
+      <div className="grid grid-cols-4 items-start gap-4">
+        <Label htmlFor={`${prefix}-memo`} className="text-right pt-2">메모</Label>
+        <Textarea id={`${prefix}-memo`} value={formData.memo} onChange={(e) => setFormData({ ...formData, memo: e.target.value })} className="col-span-3" placeholder="모임에 대한 메모를 작성하세요..." rows={3} />
+      </div>
+      <div className="grid grid-cols-4 items-start gap-4">
+        <Label className="text-right pt-2">참석자</Label>
+        <div className="col-span-3">
+          {members.length === 0 ? (
+            <p className="text-sm text-muted-foreground">등록된 멤버가 없습니다.</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+              {members.map((member) => (
+                <div key={member.id} className="flex items-center space-x-2">
+                  <Checkbox id={`${prefix}-attendee-${member.id}`} checked={formData.attendees.includes(member.id)} onCheckedChange={(checked) => handleAttendeeChange(member.id, checked as boolean)} />
+                  <Label htmlFor={`${prefix}-attendee-${member.id}`} className="text-sm font-normal cursor-pointer">{member.nickname}</Label>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 
   return (
     <div className="min-h-screen bg-background pb-16 sm:pb-0">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-xl font-medium text-foreground font-[family-name:var(--font-heading)] mb-1">모임 일정</h1>
-          <p className="text-sm text-muted-foreground">아고나락 모임 일정을 관리하고 참석 현황을 확인하세요.</p>
-        </div>
-
-        {error && (
-          <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded text-sm text-destructive">
-            {error}
+      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+        {/* 헤더 */}
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-semibold text-foreground font-[family-name:var(--font-heading)]">모임 일정</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              전체 {meetings.length}회 · 예정 {upcomingMeetings.length}회
+            </p>
           </div>
-        )}
-
-        {/* 통계 카드 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">전체 모임</CardTitle>
-              <CalendarDays className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{meetings.length}</div>
-              <p className="text-xs text-muted-foreground">총 모임 수</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">예정된 모임</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{upcomingMeetings.length}</div>
-              <p className="text-xs text-muted-foreground">다가오는 모임</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">지난 모임</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-normal font-[family-name:var(--font-heading)]">{pastMeetings.length}</div>
-              <p className="text-xs text-muted-foreground">완료된 모임</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* 검색 및 추가 버튼 */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="모임 검색..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={resetForm}>
-                <Plus className="h-4 w-4 mr-2" />
+              <Button size="sm" onClick={resetForm}>
+                <Plus className="h-4 w-4 mr-1" />
                 모임 추가
               </Button>
             </DialogTrigger>
@@ -341,68 +385,7 @@ export default function Meetings() {
                 <DialogTitle>새 모임 추가</DialogTitle>
                 <DialogDescription>새로운 모임의 정보를 입력해주세요.</DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="title" className="text-right">제목</Label>
-                  <Input id="title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="col-span-3" placeholder="모임 제목을 입력하세요" />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="date" className="text-right">날짜 *</Label>
-                  <Input id="date" type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="col-span-3" />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="time" className="text-right">시간 *</Label>
-                  <Input id="time" type="time" value={formData.time} onChange={(e) => setFormData({ ...formData, time: e.target.value })} className="col-span-3" />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right">장소</Label>
-                  <div className="col-span-3 space-y-2">
-                    <Select
-                      value={locationType}
-                      onValueChange={(value) => {
-                        setFormData({ ...formData, location: value === '기타' ? '' : value })
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="디스코드">디스코드</SelectItem>
-                        <SelectItem value="오프라인">오프라인</SelectItem>
-                        <SelectItem value="기타">기타</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {locationType === '기타' && (
-                      <Input
-                        value={formData.location}
-                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                        placeholder="장소를 입력하세요"
-                      />
-                    )}
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-start gap-4">
-                  <Label htmlFor="memo" className="text-right pt-2">메모</Label>
-                  <Textarea id="memo" value={formData.memo} onChange={(e) => setFormData({ ...formData, memo: e.target.value })} className="col-span-3" placeholder="모임에 대한 메모를 작성하세요..." rows={3} />
-                </div>
-                <div className="grid grid-cols-4 items-start gap-4">
-                  <Label className="text-right pt-2">참석자</Label>
-                  <div className="col-span-3">
-                    {members.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">등록된 멤버가 없습니다.</p>
-                    ) : (
-                      <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
-                        {members.map((member) => (
-                          <div key={member.id} className="flex items-center space-x-2">
-                            <Checkbox id={`attendee-${member.id}`} checked={formData.attendees.includes(member.id)} onCheckedChange={(checked) => handleAttendeeChange(member.id, checked as boolean)} />
-                            <Label htmlFor={`attendee-${member.id}`} className="text-sm font-normal cursor-pointer">{member.nickname}</Label>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              {renderFormFields('add')}
               <DialogFooter>
                 <Button type="submit" onClick={handleAddMeeting} disabled={submitting}>
                   {submitting ? '추가 중...' : '모임 추가'}
@@ -412,203 +395,234 @@ export default function Meetings() {
           </Dialog>
         </div>
 
-        {/* 예정된 모임 */}
-        {upcomingMeetings.length > 0 && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Calendar className="h-5 w-5 mr-2" />
-                예정된 모임
-              </CardTitle>
-              <CardDescription>다가오는 {upcomingMeetings.length}개의 모임이 있습니다.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>일시</TableHead>
-                    <TableHead>장소</TableHead>
-                    <TableHead>모임 제목</TableHead>
-                    <TableHead>참여 인원</TableHead>
-                    <TableHead>메모</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {upcomingMeetings.map((meeting) => {
-                    const { date, time } = formatDateTime(meeting.date)
-                    return (
-                      <TableRow key={meeting.id}>
-                        <TableCell className="font-medium">
-                          <div>
-                            <div className="font-medium">{date}</div>
-                            <div className="text-sm text-muted-foreground flex items-center">
-                              <Clock className="h-3 w-3 mr-1" />
-                              {time}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center text-sm">
-                            <MapPin className="h-3 w-3 mr-1 text-muted-foreground" />
-                            {meeting.location || '장소 미정'}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="font-medium text-sm">{meeting.title || '제목 없음'}</div>
-                        </TableCell>
-                        <TableCell>
-                          {meeting.attendances.length > 0 ? (
-                            <div className="flex flex-wrap gap-1">
-                              {meeting.attendances.filter(a => a.status === 'ATTENDING').slice(0, 3).map((attendance) => (
-                                <Avatar key={attendance.member.id} className="h-6 w-6" title={attendance.member.nickname}>
-                                  <AvatarImage src={attendance.member.avatarUrl || ''} alt={attendance.member.nickname} />
-                                  <AvatarFallback className="bg-muted text-muted-foreground text-[10px]">{attendance.member.nickname.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                              ))}
-                              {meeting.attendances.filter(a => a.status === 'ATTENDING').length > 3 && (
-                                <Badge variant="outline" className="text-xs">+{meeting.attendances.filter(a => a.status === 'ATTENDING').length - 3}</Badge>
-                              )}
-                              {meeting.attendances.filter(a => a.status === 'ATTENDING').length === 0 && (
-                                <span className="text-sm text-muted-foreground">참여 인원 없음</span>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">참여 인원 없음</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {meeting.memo ? (
-                            <div className="text-sm text-muted-foreground max-w-xs truncate">{meeting.memo}</div>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">메모 없음</span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+        {error && (
+          <div className="mb-6 p-3 bg-destructive/10 border border-destructive/20 rounded text-sm text-destructive">
+            {error}
+          </div>
         )}
 
-        {/* 전체 모임 목록 */}
-        <Card>
-          <CardHeader>
-            <CardTitle>모든 모임</CardTitle>
-            <CardDescription>현재 {filteredMeetings.length}개의 모임이 등록되어 있습니다.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-center py-8">
-                <div className="text-muted-foreground">모임 데이터를 불러오는 중...</div>
-              </div>
-            ) : filteredMeetings.length === 0 ? (
-              <div className="text-center py-8">
-                <CalendarDays className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-                <h3 className="text-sm font-medium text-foreground mb-2">
-                  {searchTerm ? '검색 결과가 없습니다' : '등록된 모임이 없습니다'}
-                </h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {searchTerm ? '다른 검색어로 시도해보세요.' : '새로운 모임을 추가해보세요.'}
-                </p>
-                {!searchTerm && (
-                  <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button onClick={resetForm}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        첫 번째 모임 추가
-                      </Button>
-                    </DialogTrigger>
-                  </Dialog>
-                )}
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>일시</TableHead>
-                    <TableHead>장소</TableHead>
-                    <TableHead>모임 제목</TableHead>
-                    <TableHead>참여 인원</TableHead>
-                    <TableHead>메모</TableHead>
-                    <TableHead>작업</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredMeetings.map((meeting) => {
-                    const { date, time } = formatDateTime(meeting.date)
-                    const isPast = new Date(meeting.date) < now
-                    return (
-                      <TableRow key={meeting.id} className={isPast ? 'opacity-60' : ''}>
-                        <TableCell className="font-medium">
-                          <div>
-                            <div className="font-medium">{date}</div>
-                            <div className="text-sm text-muted-foreground flex items-center">
-                              <Clock className="h-3 w-3 mr-1" />
-                              {time}
-                              {isPast && (
-                                <Badge variant="outline" className="ml-2 text-xs">완료</Badge>
-                              )}
-                            </div>
+        {/* 검색 */}
+        <div className="mb-8">
+          <div className="relative max-w-sm">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="모임 검색..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="text-center py-16">
+            <div className="text-muted-foreground">모임 데이터를 불러오는 중...</div>
+          </div>
+        ) : filteredMeetings.length === 0 && !searchTerm ? (
+          <div className="text-center py-16">
+            <CalendarDays className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+            <h3 className="text-sm font-medium text-foreground mb-2">등록된 모임이 없습니다</h3>
+            <p className="text-sm text-muted-foreground mb-4">새로운 모임을 추가해보세요.</p>
+          </div>
+        ) : (
+          <>
+            {/* 다음 모임 하이라이트 */}
+            {nextMeeting && (
+              <div className="mb-10">
+                <p className="text-xs tracking-widest uppercase text-muted-foreground mb-3">NEXT</p>
+                <Card>
+                  <CardContent className="p-6 lg:p-8">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-baseline gap-3 mb-1">
+                          <h2 className="text-xl lg:text-2xl font-semibold text-foreground font-[family-name:var(--font-heading)]">
+                            {formatDateLarge(nextMeeting.date).date}
+                          </h2>
+                          <div className="flex items-center text-sm text-muted-foreground">
+                            <Clock className="h-3.5 w-3.5 mr-1" />
+                            {formatDateLarge(nextMeeting.date).time}
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center text-sm">
-                            <MapPin className="h-3 w-3 mr-1 text-muted-foreground" />
-                            {meeting.location || '장소 미정'}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="font-medium text-sm">{meeting.title || '제목 없음'}</div>
-                        </TableCell>
-                        <TableCell>
-                          {meeting.attendances.length > 0 ? (
-                            <div className="flex flex-wrap gap-1">
-                              {meeting.attendances.filter(a => a.status === 'ATTENDING').slice(0, 4).map((attendance) => (
-                                <Avatar key={attendance.member.id} className="h-6 w-6" title={attendance.member.nickname}>
-                                  <AvatarImage src={attendance.member.avatarUrl || ''} alt={attendance.member.nickname} />
-                                  <AvatarFallback className="bg-muted text-muted-foreground text-[10px]">{attendance.member.nickname.charAt(0)}</AvatarFallback>
+                        </div>
+
+                        {nextMeeting.title && (
+                          <p className="text-sm font-medium text-foreground mt-2">{nextMeeting.title}</p>
+                        )}
+
+                        <div className="flex items-center text-sm text-muted-foreground mt-2">
+                          <MapPin className="h-3.5 w-3.5 mr-1" />
+                          {nextMeeting.location || '장소 미정'}
+                        </div>
+
+                        {getAttendingMembers(nextMeeting).length > 0 && (
+                          <div className="flex items-center gap-2 mt-4">
+                            <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                            <div className="flex -space-x-1.5">
+                              {getAttendingMembers(nextMeeting).slice(0, 6).map((a) => (
+                                <Avatar key={a.member.id} className="h-7 w-7 border-2 border-card" title={a.member.nickname}>
+                                  <AvatarImage src={a.member.avatarUrl || ''} alt={a.member.nickname} />
+                                  <AvatarFallback className="bg-muted text-muted-foreground text-[10px]">
+                                    {a.member.nickname.charAt(0)}
+                                  </AvatarFallback>
                                 </Avatar>
                               ))}
-                              {meeting.attendances.filter(a => a.status === 'ATTENDING').length > 4 && (
-                                <Badge variant="outline" className="text-xs">+{meeting.attendances.filter(a => a.status === 'ATTENDING').length - 4}</Badge>
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              {getAttendingCount(nextMeeting)}명 참석
+                            </span>
+                          </div>
+                        )}
+
+                        {nextMeeting.memo && (
+                          <p className="text-sm text-muted-foreground mt-3 line-clamp-2">{nextMeeting.memo}</p>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1 ml-4">
+                        <Button variant="outline" size="sm" onClick={() => handleEditMeeting(nextMeeting)}>
+                          <Edit className="h-3.5 w-3.5 mr-1" />
+                          수정
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleDeleteMeeting(nextMeeting.id)} className="text-destructive hover:text-destructive">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* 예정된 모임 (나머지) */}
+            {restUpcoming.length > 0 && (
+              <div className="mb-10">
+                <p className="text-xs tracking-widest uppercase text-muted-foreground mb-3">예정된 모임</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {restUpcoming.map((meeting) => {
+                    const { date, time } = formatDateCompact(meeting.date)
+                    return (
+                      <Card key={meeting.id}>
+                        <CardContent className="p-5">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-foreground">{date}</p>
+                              <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                                <span className="flex items-center">
+                                  <Clock className="h-3 w-3 mr-0.5" />
+                                  {time}
+                                </span>
+                                <span className="flex items-center">
+                                  <MapPin className="h-3 w-3 mr-0.5" />
+                                  {meeting.location || '미정'}
+                                </span>
+                              </div>
+                              {meeting.title && (
+                                <p className="text-xs text-muted-foreground mt-2 truncate">{meeting.title}</p>
                               )}
-                              {meeting.attendances.filter(a => a.status === 'ATTENDING').length === 0 && (
-                                <span className="text-sm text-muted-foreground">참여 인원 없음</span>
+                              {getAttendingMembers(meeting).length > 0 && (
+                                <div className="flex items-center gap-1.5 mt-3">
+                                  <div className="flex -space-x-1">
+                                    {getAttendingMembers(meeting).slice(0, 4).map((a) => (
+                                      <Avatar key={a.member.id} className="h-5 w-5 border-2 border-card" title={a.member.nickname}>
+                                        <AvatarImage src={a.member.avatarUrl || ''} alt={a.member.nickname} />
+                                        <AvatarFallback className="bg-muted text-muted-foreground text-[8px]">
+                                          {a.member.nickname.charAt(0)}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                    ))}
+                                  </div>
+                                  <span className="text-xs text-muted-foreground">{getAttendingCount(meeting)}명</span>
+                                </div>
                               )}
                             </div>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">참여 인원 없음</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {meeting.memo ? (
-                            <div className="text-sm text-muted-foreground max-w-xs truncate">{meeting.memo}</div>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">메모 없음</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Button variant="outline" size="sm" onClick={() => handleEditMeeting(meeting)}>
-                              <Edit className="h-3 w-3 mr-1" />
-                              수정
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={() => handleDeleteMeeting(meeting.id)} className="text-destructive hover:text-destructive">
-                              <Trash2 className="h-3 w-3 mr-1" />
-                              삭제
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleEditMeeting(meeting)}>
+                                  <Edit className="h-3.5 w-3.5 mr-2" />
+                                  수정
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleDeleteMeeting(meeting.id)} className="text-destructive focus:text-destructive">
+                                  <Trash2 className="h-3.5 w-3.5 mr-2" />
+                                  삭제
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
-                        </TableCell>
-                      </TableRow>
+                        </CardContent>
+                      </Card>
                     )
                   })}
-                </TableBody>
-              </Table>
+                </div>
+              </div>
             )}
-          </CardContent>
-        </Card>
+
+            {/* 지난 모임 타임라인 */}
+            {pastMeetings.length > 0 && (
+              <div>
+                <p className="text-xs tracking-widest uppercase text-muted-foreground mb-4">지난 모임</p>
+                <div className="space-y-6">
+                  {Object.entries(pastByYear)
+                    .sort(([a], [b]) => Number(b) - Number(a))
+                    .map(([year, yearMeetings]) => (
+                      <div key={year}>
+                        <p className="text-xs tracking-widest uppercase text-muted-foreground mb-3">{year}</p>
+                        <div className="space-y-1 border-l border-border pl-4">
+                          {yearMeetings.map((meeting) => {
+                            const date = new Date(meeting.date)
+                            const dateStr = date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
+                            const attending = getAttendingCount(meeting)
+                            return (
+                              <div key={meeting.id} className="flex items-center gap-3 py-2 group">
+                                <span className="text-xs text-muted-foreground w-14 flex-shrink-0">{dateStr}</span>
+                                <span className="text-sm text-foreground truncate flex-1">
+                                  {meeting.title || meeting.location || '모임'}
+                                </span>
+                                <span className="flex items-center text-xs text-muted-foreground flex-shrink-0">
+                                  <MapPin className="h-3 w-3 mr-0.5" />
+                                  {meeting.location || '미정'}
+                                </span>
+                                {attending > 0 && (
+                                  <span className="text-xs text-muted-foreground flex-shrink-0">{attending}명</span>
+                                )}
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                      <MoreHorizontal className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => handleEditMeeting(meeting)}>
+                                      <Edit className="h-3.5 w-3.5 mr-2" />
+                                      수정
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleDeleteMeeting(meeting.id)} className="text-destructive focus:text-destructive">
+                                      <Trash2 className="h-3.5 w-3.5 mr-2" />
+                                      삭제
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {filteredMeetings.length === 0 && searchTerm && (
+              <div className="text-center py-12">
+                <Search className="mx-auto h-10 w-10 text-muted-foreground/50 mb-3" />
+                <p className="text-sm text-muted-foreground">검색 결과가 없습니다</p>
+              </div>
+            )}
+          </>
+        )}
 
         {/* 수정 다이얼로그 */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -617,68 +631,7 @@ export default function Meetings() {
               <DialogTitle>모임 수정</DialogTitle>
               <DialogDescription>모임의 정보를 수정해주세요.</DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-title" className="text-right">제목</Label>
-                <Input id="edit-title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="col-span-3" placeholder="모임 제목을 입력하세요" />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-date" className="text-right">날짜 *</Label>
-                <Input id="edit-date" type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="col-span-3" />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-time" className="text-right">시간 *</Label>
-                <Input id="edit-time" type="time" value={formData.time} onChange={(e) => setFormData({ ...formData, time: e.target.value })} className="col-span-3" />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">장소</Label>
-                <div className="col-span-3 space-y-2">
-                  <Select
-                    value={locationType}
-                    onValueChange={(value) => {
-                      setFormData({ ...formData, location: value === '기타' ? '' : value })
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="디스코드">디스코드</SelectItem>
-                      <SelectItem value="오프라인">오프라인</SelectItem>
-                      <SelectItem value="기타">기타</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {locationType === '기타' && (
-                    <Input
-                      value={formData.location}
-                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                      placeholder="장소를 입력하세요"
-                    />
-                  )}
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-start gap-4">
-                <Label htmlFor="edit-memo" className="text-right pt-2">메모</Label>
-                <Textarea id="edit-memo" value={formData.memo} onChange={(e) => setFormData({ ...formData, memo: e.target.value })} className="col-span-3" placeholder="모임에 대한 메모를 작성하세요..." rows={3} />
-              </div>
-              <div className="grid grid-cols-4 items-start gap-4">
-                <Label className="text-right pt-2">참석자</Label>
-                <div className="col-span-3">
-                  {members.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">등록된 멤버가 없습니다.</p>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
-                      {members.map((member) => (
-                        <div key={member.id} className="flex items-center space-x-2">
-                          <Checkbox id={`edit-attendee-${member.id}`} checked={formData.attendees.includes(member.id)} onCheckedChange={(checked) => handleAttendeeChange(member.id, checked as boolean)} />
-                          <Label htmlFor={`edit-attendee-${member.id}`} className="text-sm font-normal cursor-pointer">{member.nickname}</Label>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+            {renderFormFields('edit')}
             <DialogFooter>
               <Button type="submit" onClick={handleUpdateMeeting} disabled={submitting}>
                 {submitting ? '수정 중...' : '수정 완료'}
