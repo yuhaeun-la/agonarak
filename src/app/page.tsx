@@ -113,11 +113,13 @@ function formatDateTime(dateString: string) {
   const date = new Date(dateString)
   return {
     date: date.toLocaleDateString('ko-KR', {
+      timeZone: 'Asia/Seoul',
       month: 'long',
       day: 'numeric',
       weekday: 'short'
     }),
     time: date.toLocaleTimeString('ko-KR', {
+      timeZone: 'Asia/Seoul',
       hour: '2-digit',
       minute: '2-digit'
     })
