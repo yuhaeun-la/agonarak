@@ -243,7 +243,7 @@ export default async function Home() {
             <>
               <div className="border rounded-lg divide-y">
                 {recentBooks.map((book) => (
-                  <div key={book.id} className="flex items-center gap-3 p-3">
+                  <Link key={book.id} href={`/books/${book.id}`} className="flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors">
                     {book.thumbnail ? (
                       <img
                         src={book.thumbnail}
@@ -270,7 +270,7 @@ export default async function Home() {
                         </AvatarFallback>
                       </Avatar>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
               <div className="text-center mt-4">
