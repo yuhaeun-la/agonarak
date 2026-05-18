@@ -248,8 +248,23 @@ export default function Meetings() {
     return `아고나락 모임 ${maxNumber + 1}차`
   }
 
+  const getTodayDate = () => {
+    const now = new Date()
+    const y = now.getFullYear()
+    const m = String(now.getMonth() + 1).padStart(2, '0')
+    const d = String(now.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }
+
+  const getCurrentTime = () => {
+    const now = new Date()
+    const h = String(now.getHours()).padStart(2, '0')
+    const m = String(now.getMinutes()).padStart(2, '0')
+    return `${h}:${m}`
+  }
+
   const resetForm = () => {
-    setFormData({ title: getNextMeetingTitle(), date: '', time: '', location: '디스코드', memo: '', attendees: [] })
+    setFormData({ title: getNextMeetingTitle(), date: getTodayDate(), time: getCurrentTime(), location: '디스코드', memo: '', attendees: [] })
     setError('')
   }
 
