@@ -461,15 +461,9 @@ export default function Meetings() {
                   <CardContent className="p-6 lg:p-8">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <div className="flex items-baseline gap-3 mb-1">
-                          <h2 className="text-xl lg:text-2xl font-semibold text-foreground font-[family-name:var(--font-heading)]">
-                            {formatDateLarge(nextMeeting.date).date}
-                          </h2>
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <Clock className="h-3.5 w-3.5 mr-1" />
-                            {formatDateLarge(nextMeeting.date).time}
-                          </div>
-                        </div>
+                        <h2 className="text-xl lg:text-2xl font-semibold text-foreground font-[family-name:var(--font-heading)]">
+                          {formatDateLarge(nextMeeting.date).date}
+                        </h2>
 
                         {nextMeeting.title && (
                           <p className="text-sm font-medium text-foreground mt-2">{nextMeeting.title}</p>
@@ -499,8 +493,13 @@ export default function Meetings() {
                           </div>
                         )}
 
+                        <div className="flex items-center text-sm text-muted-foreground mt-3">
+                          <Clock className="h-3.5 w-3.5 mr-1" />
+                          {formatDateLarge(nextMeeting.date).time}
+                        </div>
+
                         {nextMeeting.memo && (
-                          <p className="text-sm text-muted-foreground mt-3 line-clamp-2">{nextMeeting.memo}</p>
+                          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{nextMeeting.memo}</p>
                         )}
                       </div>
 
@@ -532,15 +531,9 @@ export default function Meetings() {
                           <div className="flex items-start justify-between">
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-foreground">{date}</p>
-                              <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                                <span className="flex items-center">
-                                  <Clock className="h-3 w-3 mr-0.5" />
-                                  {time}
-                                </span>
-                                <span className="flex items-center">
-                                  <MapPin className="h-3 w-3 mr-0.5" />
-                                  {meeting.location || '미정'}
-                                </span>
+                              <div className="flex items-center mt-1 text-xs text-muted-foreground">
+                                <MapPin className="h-3 w-3 mr-0.5" />
+                                {meeting.location || '미정'}
                               </div>
                               {meeting.title && (
                                 <p className="text-xs text-muted-foreground mt-2 truncate">{meeting.title}</p>
@@ -560,6 +553,10 @@ export default function Meetings() {
                                   <span className="text-xs text-muted-foreground">{getAttendingCount(meeting)}명</span>
                                 </div>
                               )}
+                              <div className="flex items-center mt-2 text-xs text-muted-foreground">
+                                <Clock className="h-3 w-3 mr-0.5" />
+                                {time}
+                              </div>
                             </div>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
