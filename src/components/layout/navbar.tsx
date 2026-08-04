@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { BookOpen, Calendar, Users, BarChart3 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -28,8 +29,15 @@ export function Navbar() {
           <div className="flex h-14 justify-between">
             <div className="flex">
               <div className="flex flex-shrink-0 items-center">
-                <Link href="/" className="text-xl font-normal text-foreground font-[family-name:var(--font-heading)] py-2 -my-2">
-                  아고나락
+                <Link href="/" className="flex items-center py-2 -my-2">
+                  <Image
+                    src="/eureka-banner.png"
+                    alt="아고나락"
+                    width={120}
+                    height={40}
+                    className="object-contain"
+                    priority
+                  />
                 </Link>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:space-x-6">
