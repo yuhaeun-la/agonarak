@@ -87,23 +87,33 @@ export function PhotoUploadDialog({
         const formData = new FormData()
         formData.append('file', file)
 
+        console.log('Uploading file:', file.name, file.size, 'bytes')
+
         const uploadRes = await fetch('/api/photos/upload', {
           method: 'POST',
           body: formData,
         })
 
+        console.log('Upload response status:', uploadRes.status)
+
         if (!uploadRes.ok) {
-          throw new Error('업로드 실패')
+          const errorData = await uploadRes.json()
+          console.error('Upload failed:', errorData)
+          throw new Error(errorData.error || '업로드 실패')
         }
 
         const { imageUrl, publicId } = await uploadRes.json()
+        console.log('Upload successful:', imageUrl)
 
         // Save to database
+        console.log('Saving to database...')
         const result = await addMeetingPhoto({
           meetingId: selectedMeetingId,
           imageUrl,
           publicId,
         })
+
+        console.log('Database save result:', result)
 
         if (result.error) {
           setError(result.error)
@@ -119,7 +129,8 @@ export function PhotoUploadDialog({
       router.refresh()
     } catch (err) {
       console.error('Upload error:', err)
-      setError('업로드 중 오류가 발생했습니다.')
+      const errorMessage = err instanceof Error ? err.message : '업로드 중 오류가 발생했습니다.'
+      setError(errorMessage)
     } finally {
       setUploading(false)
     }

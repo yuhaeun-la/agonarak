@@ -9,21 +9,33 @@ cloudinary.config({
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('Upload API called')
+    console.log('Cloudinary config:', {
+      cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY ? '***' : 'missing',
+      api_secret: process.env.CLOUDINARY_API_SECRET ? '***' : 'missing'
+    })
+
     const formData = await request.formData()
     const file = formData.get('file') as File
 
     if (!file) {
+      console.error('No file in request')
       return NextResponse.json(
         { error: '파일이 없습니다.' },
         { status: 400 }
       )
     }
 
+    console.log('File received:', file.name, file.size, 'bytes', file.type)
+
     // Convert file to buffer
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
+    console.log('Buffer created:', buffer.length, 'bytes')
 
     // Upload to Cloudinary
+    console.log('Starting Cloudinary upload...')
     const result = await new Promise<any>((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
@@ -35,8 +47,13 @@ export async function POST(request: NextRequest) {
           ]
         },
         (error, result) => {
-          if (error) reject(error)
-          else resolve(result)
+          if (error) {
+            console.error('Cloudinary upload error:', error)
+            reject(error)
+          } else {
+            console.log('Cloudinary upload success:', result.secure_url)
+            resolve(result)
+          }
         }
       )
       uploadStream.end(buffer)
@@ -50,7 +67,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Upload error:', error)
     return NextResponse.json(
-      { error: '업로드에 실패했습니다.' },
+      { error: error instanceof Error ? error.message : '업로드에 실패했습니다.' },
       { status: 500 }
     )
   }
