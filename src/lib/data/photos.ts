@@ -47,7 +47,7 @@ export const getPastMeetings = unstable_cache(
       where: {
         date: { lte: new Date() }
       },
-      orderBy: { date: 'desc' }
+      orderBy: { date: 'asc' } // 오래된 순 정렬 (1차, 2차, 3차...)
     })
     return meetings
   },

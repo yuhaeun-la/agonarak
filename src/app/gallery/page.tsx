@@ -11,12 +11,12 @@ export default async function GalleryPage() {
     getPastMeetings()
   ])
 
-  // 모임 차수 계산 (전체 과거 모임 기준)
+  // 모임 차수 계산 (첫 모임 = 1차, 시간순)
   const meetingsWithNumber = meetingsWithPhotos.map((meeting) => {
     const index = allPastMeetings.findIndex(m => m.id === meeting.id)
     return {
       ...meeting,
-      meetingNumber: allPastMeetings.length - index
+      meetingNumber: index + 1 // 첫 모임(index 0) = 1차
     }
   })
 
