@@ -35,6 +35,7 @@ export function PhotoUploadDialog({
   const [previews, setPreviews] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
+  const [uploadSuccess, setUploadSuccess] = useState(false)
 
   // Sort meetings by date (most recent first)
   const sortedMeetings = [...meetings].sort((a, b) =>
@@ -50,6 +51,7 @@ export function PhotoUploadDialog({
     }
 
     setError('')
+    setUploadSuccess(false)
     setFiles(prev => [...prev, ...selectedFiles])
 
     // Create previews
@@ -121,12 +123,18 @@ export function PhotoUploadDialog({
         }
       }
 
-      // Reset and close
-      setFiles([])
-      setPreviews([])
-      setSelectedMeetingId('')
-      onOpenChange(false)
-      router.refresh()
+      // Show success state
+      setUploadSuccess(true)
+
+      // Wait a moment to show success message, then close and refresh
+      setTimeout(() => {
+        setFiles([])
+        setPreviews([])
+        setSelectedMeetingId('')
+        setUploadSuccess(false)
+        onOpenChange(false)
+        router.refresh()
+      }, 1000)
     } catch (err) {
       console.error('Upload error:', err)
       const errorMessage = err instanceof Error ? err.message : '업로드 중 오류가 발생했습니다.'
@@ -213,6 +221,13 @@ export function PhotoUploadDialog({
             </div>
           )}
 
+          {/* Success Message */}
+          {uploadSuccess && (
+            <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+              <p className="text-sm text-green-800 font-medium">✓ 업로드 완료!</p>
+            </div>
+          )}
+
           {/* Error Message */}
           {error && (
             <p className="text-sm text-destructive">{error}</p>
@@ -224,16 +239,16 @@ export function PhotoUploadDialog({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={uploading}
+            disabled={uploading || uploadSuccess}
           >
             취소
           </Button>
           <Button
             onClick={handleUpload}
-            disabled={uploading || files.length === 0 || !selectedMeetingId}
+            disabled={uploading || uploadSuccess || files.length === 0 || !selectedMeetingId}
           >
             {uploading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            업로드
+            {uploadSuccess ? '완료' : '업로드'}
           </Button>
         </div>
       </DialogContent>
