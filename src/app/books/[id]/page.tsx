@@ -198,13 +198,68 @@ export default function BookDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pb-16 sm:pb-0">
         <Navbar />
-        <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-          <div className="text-center py-16">
-            <div className="text-muted-foreground">데이터를 불러오는 중...</div>
+        <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+          <Button variant="ghost" size="sm" className="mb-6 -ml-2 text-muted-foreground" disabled>
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            책 관리
+          </Button>
+
+          {/* 책 히어로 스켈레톤 */}
+          <div className="flex gap-6 mb-10">
+            <Skeleton className="h-40 w-28 rounded flex-shrink-0" />
+            <div className="min-w-0 flex-1">
+              <Skeleton className="h-6 w-3/4 mb-2" />
+              <Skeleton className="h-4 w-1/2 mb-4" />
+              <Skeleton className="h-6 w-32 mb-4" />
+              <Skeleton className="h-4 w-2/3 mb-4" />
+              <Skeleton className="h-9 w-20" />
+            </div>
           </div>
-        </main>
+
+          {/* 등록 정보 스켈레톤 */}
+          <div className="mb-10">
+            <Skeleton className="h-4 w-24 mb-3" />
+            <div className="border rounded-lg divide-y">
+              <div className="flex items-center justify-between p-3">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+              <div className="flex items-center justify-between p-3">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-6 w-24" />
+              </div>
+            </div>
+          </div>
+
+          {/* 메모 스켈레톤 */}
+          <div className="mb-10">
+            <Skeleton className="h-4 w-16 mb-3" />
+            <div className="border rounded-lg p-4">
+              <Skeleton className="h-4 w-full mb-2" />
+              <Skeleton className="h-4 w-full mb-2" />
+              <Skeleton className="h-4 w-2/3" />
+            </div>
+          </div>
+
+          {/* 첨부파일 스켈레톤 */}
+          <div className="mb-10">
+            <Skeleton className="h-4 w-20 mb-3" />
+            <div className="border rounded-lg p-4">
+              <Skeleton className="h-4 w-full" />
+            </div>
+          </div>
+
+          {/* 독서노트 스켈레톤 */}
+          <div>
+            <Skeleton className="h-4 w-24 mb-3" />
+            <div className="border rounded-lg p-4">
+              <Skeleton className="h-4 w-full mb-2" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
