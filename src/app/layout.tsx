@@ -5,6 +5,11 @@ import { Providers } from "./providers";
 export const metadata: Metadata = {
   title: "아고나락 - 독서 모임 관리",
   description: "독서 모임을 위한 종합 관리 시스템",
+  icons: {
+    icon: '/icon.png',
+    shortcut: '/icon.png',
+    apple: '/icon.png',
+  },
 };
 
 export default function RootLayout({
