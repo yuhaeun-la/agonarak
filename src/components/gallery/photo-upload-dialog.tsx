@@ -143,7 +143,7 @@ export function PhotoUploadDialog({
               <SelectContent>
                 {sortedMeetings.map((meeting) => {
                   const meetingDate = new Date(meeting.date)
-                  const dateStr = `${meetingDate.getMonth() + 1}월 ${meetingDate.getDate()}일`
+                  const dateStr = `${meetingDate.getFullYear()}년 ${meetingDate.getMonth() + 1}월 ${meetingDate.getDate()}일`
                   return (
                     <SelectItem key={meeting.id} value={meeting.id}>
                       {dateStr} - {meeting.location || '장소 미정'}
