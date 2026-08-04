@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Navbar } from '@/components/layout/navbar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -138,6 +139,17 @@ export default async function Home() {
       <Navbar />
 
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+
+        {/* 배너 */}
+        <div className="mb-8 relative w-full aspect-[3/1] max-h-[300px] overflow-hidden rounded-lg">
+          <Image
+            src="/eureka-banner.png"
+            alt="Eureka - Agonarak"
+            fill
+            className="object-contain"
+            priority
+          />
+        </div>
 
         {/* D+ 히어로 */}
         <div className="mb-10">
