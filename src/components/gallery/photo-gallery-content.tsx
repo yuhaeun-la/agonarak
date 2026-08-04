@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Plus, ImageIcon, Trash2 } from 'lucide-react'
+import { Plus, ImageIcon, Trash2, Loader2 } from 'lucide-react'
 import { PhotoUploadDialog } from '@/components/gallery/photo-upload-dialog'
 import { deleteMeetingPhoto } from '@/lib/actions/photos'
 import Image from 'next/image'
@@ -36,6 +36,8 @@ export function PhotoGalleryContent({
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
   const [selectedMeetingId, setSelectedMeetingId] = useState<string>()
   const [isAddingToExisting, setIsAddingToExisting] = useState(false)
+  const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null)
+  const [deleteMessage, setDeleteMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
   const handleUploadClick = (meetingId?: string) => {
     setSelectedMeetingId(meetingId)
@@ -48,9 +50,23 @@ export function PhotoGalleryContent({
   const handleDeletePhoto = async (photoId: string) => {
     if (!confirm('사진을 삭제하시겠습니까?')) return
 
-    const result = await deleteMeetingPhoto(photoId)
-    if (result.success) {
-      router.refresh()
+    setDeletingPhotoId(photoId)
+    setDeleteMessage(null)
+
+    try {
+      const result = await deleteMeetingPhoto(photoId)
+      if (result.success) {
+        setDeleteMessage({ type: 'success', text: '사진이 삭제되었습니다' })
+        setTimeout(() => {
+          router.refresh()
+        }, 1000)
+      } else {
+        setDeleteMessage({ type: 'error', text: result.error || '삭제에 실패했습니다' })
+        setDeletingPhotoId(null)
+      }
+    } catch (error) {
+      setDeleteMessage({ type: 'error', text: '삭제 중 오류가 발생했습니다' })
+      setDeletingPhotoId(null)
     }
   }
 
@@ -67,6 +83,19 @@ export function PhotoGalleryContent({
             앨범 추가
           </Button>
         </div>
+
+        {/* 삭제 메시지 */}
+        {deleteMessage && (
+          <div className={`mb-6 p-3 rounded-md ${
+            deleteMessage.type === 'success'
+              ? 'bg-green-50 border border-green-200 text-green-800'
+              : 'bg-red-50 border border-red-200 text-red-800'
+          }`}>
+            <p className="text-sm font-medium">
+              {deleteMessage.type === 'success' ? '✓' : '✗'} {deleteMessage.text}
+            </p>
+          </div>
+        )}
 
         {/* 모임 앨범 그리드 */}
         {meetingsWithNumber.length === 0 ? (
@@ -134,9 +163,14 @@ export function PhotoGalleryContent({
                           />
                           <button
                             onClick={() => handleDeletePhoto(photo.id)}
-                            className="absolute top-1 right-1 bg-destructive/80 text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            disabled={deletingPhotoId === photo.id}
+                            className="absolute top-1 right-1 bg-destructive/80 text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
                           >
-                            <Trash2 className="h-3 w-3" />
+                            {deletingPhotoId === photo.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-3 w-3" />
+                            )}
                           </button>
                         </div>
                       ))}
