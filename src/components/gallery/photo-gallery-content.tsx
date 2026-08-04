@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation'
 
 interface Meeting {
   id: string
-  date: Date
+  date: Date | string
   location: string | null
   title: string
   photos: Array<{
@@ -25,7 +25,7 @@ interface Meeting {
 
 interface PhotoGalleryContentProps {
   meetingsWithNumber: Meeting[]
-  allPastMeetings: Array<{ id: string; date: Date; location: string | null }>
+  allPastMeetings: Array<{ id: string; date: Date | string; location: string | null }>
 }
 
 export function PhotoGalleryContent({

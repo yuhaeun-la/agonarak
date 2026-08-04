@@ -12,7 +12,7 @@ import Image from 'next/image'
 
 interface Meeting {
   id: string
-  date: Date
+  date: Date | string
   location?: string | null
 }
 
