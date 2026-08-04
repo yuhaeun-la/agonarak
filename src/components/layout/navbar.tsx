@@ -29,13 +29,13 @@ export function Navbar() {
           <div className="flex h-14 justify-between">
             <div className="flex">
               <div className="flex flex-shrink-0 items-center">
-                <Link href="/" className="flex items-center py-2 -my-2">
+                <Link href="/" className="flex items-center h-8">
                   <Image
-                    src="/eureka-banner.png"
+                    src="/agonarak-logo.png"
                     alt="아고나락"
-                    width={120}
-                    height={40}
-                    className="object-contain"
+                    width={96}
+                    height={32}
+                    className="object-contain h-full w-auto"
                     priority
                   />
                 </Link>
