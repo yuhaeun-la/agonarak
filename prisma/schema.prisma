@@ -36,17 +36,31 @@ model Member {
 }
 
 model Meeting {
-  id          String        @id @default(cuid())
+  id          String         @id @default(cuid())
   title       String
   date        DateTime
   location    String?
   memo        String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
   clubId      String
   attendances Attendance[]
-  club        Club          @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  club        Club           @relation(fields: [clubId], references: [id], onDelete: Cascade)
   books       MeetingBook[]
+  photos      MeetingPhoto[]
+}
+
+model MeetingPhoto {
+  id          String   @id @default(cuid())
+  meetingId   String
+  imageUrl    String
+  publicId    String   // Cloudinary public ID
+  caption     String?
+  uploadedBy  String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  meeting     Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
 }
 
 model Book {

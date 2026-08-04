@@ -3,13 +3,14 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { BookOpen, Calendar, Users, BarChart3 } from 'lucide-react'
+import { BookOpen, Calendar, Users, BarChart3, Image as ImageIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
   { href: '/', label: '대시보드', icon: BarChart3 },
   { href: '/meetings', label: '모임 일정', icon: Calendar },
   { href: '/books', label: '책 관리', icon: BookOpen },
+  { href: '/gallery', label: '갤러리', icon: ImageIcon },
   { href: '/members', label: '멤버 관리', icon: Users },
 ]
 
