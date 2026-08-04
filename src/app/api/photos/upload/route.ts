@@ -50,9 +50,11 @@ export async function POST(request: NextRequest) {
           if (error) {
             console.error('Cloudinary upload error:', error)
             reject(error)
-          } else {
+          } else if (result) {
             console.log('Cloudinary upload success:', result.secure_url)
             resolve(result)
+          } else {
+            reject(new Error('Upload failed: no result'))
           }
         }
       )
