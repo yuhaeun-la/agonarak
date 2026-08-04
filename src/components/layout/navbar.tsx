@@ -25,22 +25,21 @@ export function Navbar() {
     <>
       {/* Desktop Navbar */}
       <nav className="border-b bg-card">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-14 justify-between">
-            <div className="flex">
-              <div className="flex flex-shrink-0 items-center">
-                <Link href="/" className="flex items-center h-8">
-                  <Image
-                    src="/agonarak-logo.png"
-                    alt="아고나락"
-                    width={96}
-                    height={32}
-                    className="object-contain h-full w-auto"
-                    priority
-                  />
-                </Link>
-              </div>
-              <div className="hidden sm:ml-6 sm:flex sm:space-x-6">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6">
+          <div className="flex h-14 items-center">
+            <div className="flex flex-shrink-0 items-center">
+              <Link href="/" className="flex items-center h-8">
+                <Image
+                  src="/agonarak-logo.png"
+                  alt="아고나락"
+                  width={96}
+                  height={32}
+                  className="object-contain h-full w-auto"
+                  priority
+                />
+              </Link>
+            </div>
+            <div className="hidden sm:flex sm:space-x-6 sm:ml-6">
                 {navItems.map((item) => {
                   const isActive = isActiveRoute(pathname, item.href)
                   return (
@@ -60,7 +59,6 @@ export function Navbar() {
                   )
                 })}
               </div>
-            </div>
           </div>
         </div>
       </nav>

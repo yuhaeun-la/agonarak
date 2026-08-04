@@ -325,7 +325,7 @@ export default function MemberBooksPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredBooks.map((book) => (
-              <Card key={book.id} className="overflow-hidden">
+              <Card key={book.id} className="overflow-hidden cursor-pointer hover:border-muted-foreground/30 transition-colors" onClick={() => router.push(`/books/${book.id}`)}>
                 <CardContent className="p-0">
                   <div className="flex gap-4 p-4">
                     {book.thumbnail ? (

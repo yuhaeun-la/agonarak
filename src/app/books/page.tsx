@@ -603,7 +603,7 @@ export default function Books() {
               </Select>
             </div>
 
-            {/* 책 리스트 */}
+            {/* 책 카드 그리드 */}
             {filteredBooks.length === 0 ? (
               <div className="text-center py-16">
                 <BookOpen className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
@@ -620,58 +620,72 @@ export default function Books() {
                 </p>
               </div>
             ) : (
-              <div className="border rounded-lg divide-y">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredBooks.map((book) => (
-                  <div key={book.id} className="flex items-center gap-3 p-3 group hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => router.push(`/books/${book.id}`)}>
-                    {book.thumbnail ? (
-                      <img
-                        src={book.thumbnail}
-                        alt={book.title}
-                        className="h-12 w-9 rounded object-cover bg-muted flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="h-12 w-9 rounded bg-muted flex-shrink-0 flex items-center justify-center">
-                        <BookOpen className="h-4 w-4 text-muted-foreground/50" />
+                  <Card key={book.id} className="overflow-hidden cursor-pointer hover:border-muted-foreground/30 transition-colors group" onClick={() => router.push(`/books/${book.id}`)}>
+                    <CardContent className="p-0">
+                      <div className="flex gap-4 p-4">
+                        {book.thumbnail ? (
+                          <img
+                            src={book.thumbnail}
+                            alt={book.title}
+                            className="h-24 w-16 rounded object-cover bg-muted flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="h-24 w-16 rounded bg-muted flex-shrink-0 flex items-center justify-center">
+                            <BookOpen className="h-6 w-6 text-muted-foreground/50" />
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1 flex flex-col">
+                          <p className="text-sm font-medium text-foreground leading-tight line-clamp-2">{book.title}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{book.author}</p>
+
+                          {book.rating > 0 && (
+                            <div className="mt-2">
+                              <StarRatingDisplay rating={book.rating} />
+                            </div>
+                          )}
+
+                          <div className="mt-auto pt-2 flex items-center justify-between gap-2">
+                            <p className="text-xs text-muted-foreground truncate flex-1">
+                              {book.genres.slice(0, 2).join(' · ')}
+                              {book.genres.length > 2 && ` +${book.genres.length - 2}`}
+                            </p>
+                            <Avatar className="h-5 w-5 flex-shrink-0" title={book.addedBy}>
+                              <AvatarImage src={book.addedByAvatarUrl || ''} alt={book.addedBy} />
+                              <AvatarFallback className="bg-muted text-muted-foreground text-[8px]">
+                                {book.addedBy.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                          </div>
+                        </div>
                       </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-foreground truncate">{book.title}</p>
-                      <p className="text-xs text-muted-foreground">{book.author}</p>
-                    </div>
-                    <div className="flex-shrink-0 hidden sm:block">
-                      {book.rating > 0 ? (
-                        <StarRatingDisplay rating={book.rating} />
-                      ) : (
-                        <span className="text-xs text-muted-foreground">-</span>
+                      {book.notes && (
+                        <div className="px-4 pb-3 pt-0">
+                          <p className="text-xs text-muted-foreground line-clamp-2 border-t border-border pt-2">{book.notes}</p>
+                        </div>
                       )}
-                    </div>
-                    <p className="text-xs text-muted-foreground flex-shrink-0 hidden sm:block w-20 truncate text-right">
-                      {book.genres?.[0] || ''}
-                    </p>
-                    <Avatar className="h-6 w-6 flex-shrink-0" title={book.addedBy}>
-                      <AvatarImage src={book.addedByAvatarUrl || ''} alt={book.addedBy} />
-                      <AvatarFallback className="bg-muted text-muted-foreground text-[9px]">
-                        {book.addedBy.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEditBook(book) }}>
-                          <Edit className="h-3.5 w-3.5 mr-2" />
-                          수정
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDeleteBook(book.id) }} className="text-destructive focus:text-destructive">
-                          <Trash2 className="h-3.5 w-3.5 mr-2" />
-                          삭제
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 bg-background/80 backdrop-blur-sm" onClick={(e) => e.stopPropagation()}>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEditBook(book) }}>
+                              <Edit className="h-3.5 w-3.5 mr-2" />
+                              수정
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDeleteBook(book.id) }} className="text-destructive focus:text-destructive">
+                              <Trash2 className="h-3.5 w-3.5 mr-2" />
+                              삭제
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             )}
