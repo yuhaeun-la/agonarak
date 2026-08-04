@@ -1,6 +1,6 @@
 import React from 'react'
 import { Navbar } from '@/components/layout/navbar'
-import { PhotoGalleryContent } from '@/components/gallery/photo-gallery-content'
+import { PasswordProtectedGallery } from '@/components/gallery/password-protected-gallery'
 import { getAllMeetingsWithPhotos, getPastMeetings } from '@/lib/data/photos'
 
 export const revalidate = 60 // 60초 캐싱
@@ -23,7 +23,7 @@ export default async function GalleryPage() {
   return (
     <div className="min-h-screen bg-background pb-16 sm:pb-0">
       <Navbar />
-      <PhotoGalleryContent
+      <PasswordProtectedGallery
         meetingsWithNumber={meetingsWithNumber}
         allPastMeetings={allPastMeetings}
       />

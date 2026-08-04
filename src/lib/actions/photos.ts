@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 
 export async function addMeetingPhoto(data: {
@@ -33,6 +33,8 @@ export async function addMeetingPhoto(data: {
     })
 
     revalidatePath('/gallery')
+    revalidateTag('photos')
+    revalidateTag('meetings')
     return { success: true, photo }
   } catch (error) {
     console.error('Failed to add photo:', error)
@@ -47,6 +49,8 @@ export async function deleteMeetingPhoto(photoId: string) {
     })
 
     revalidatePath('/gallery')
+    revalidateTag('photos')
+    revalidateTag('meetings')
     return { success: true }
   } catch (error) {
     console.error('Failed to delete photo:', error)

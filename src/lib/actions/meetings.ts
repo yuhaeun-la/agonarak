@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 
 export async function createMeetingAction(formData: {
@@ -50,6 +50,8 @@ export async function createMeetingAction(formData: {
 
     revalidatePath('/api/meetings')
     revalidatePath('/meetings')
+    revalidateTag('meetings')
+    revalidateTag('dashboard')
     return { success: true }
   } catch (error) {
     console.error('Failed to create meeting:', error)
@@ -96,6 +98,8 @@ export async function updateMeetingAction(id: string, formData: {
 
     revalidatePath('/api/meetings')
     revalidatePath('/meetings')
+    revalidateTag('meetings')
+    revalidateTag('dashboard')
     return { success: true }
   } catch (error) {
     console.error('Failed to update meeting:', error)
@@ -109,6 +113,8 @@ export async function deleteMeetingAction(id: string) {
 
     revalidatePath('/api/meetings')
     revalidatePath('/meetings')
+    revalidateTag('meetings')
+    revalidateTag('dashboard')
     return { success: true }
   } catch (error) {
     console.error('Failed to delete meeting:', error)

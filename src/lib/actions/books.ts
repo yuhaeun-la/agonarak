@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 
 export async function createBookAction(formData: {
@@ -71,6 +71,8 @@ export async function createBookAction(formData: {
 
     revalidatePath('/api/books')
     revalidatePath('/books')
+    revalidateTag('books')
+    revalidateTag('dashboard')
     return { success: true }
   } catch (error) {
     console.error('Failed to create book:', error)
@@ -133,6 +135,8 @@ export async function updateBookAction(id: string, formData: {
     revalidatePath(`/api/books/${id}`)
     revalidatePath('/books')
     revalidatePath(`/books/${id}`)
+    revalidateTag('books')
+    revalidateTag('dashboard')
     return { success: true }
   } catch (error) {
     console.error('Failed to update book:', error)
@@ -151,6 +155,8 @@ export async function deleteBookAction(id: string) {
 
     revalidatePath('/api/books')
     revalidatePath('/books')
+    revalidateTag('books')
+    revalidateTag('dashboard')
     return { success: true }
   } catch (error) {
     console.error('Failed to delete book:', error)
