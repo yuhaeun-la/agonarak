@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { v2 as cloudinary } from 'cloudinary'
 
-cloudinary.config({
-  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-})
-
 export async function POST(request: NextRequest) {
   try {
+    // Configure Cloudinary inside the function to ensure env vars are loaded
+    cloudinary.config({
+      cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    })
+
     console.log('Upload API called')
     console.log('Cloudinary config:', {
       cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
