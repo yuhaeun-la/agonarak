@@ -1,26 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { unstable_cache, revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import type { Member } from '@prisma/client'
 
-// GET - 모든 멤버 조회
-export async function GET() {
-  try {
+// 캐시된 멤버 조회 함수
+const getCachedMembers = unstable_cache(
+  async () => {
     const now = new Date()
-    
-    // 현재 시점 기준으로 이미 지난 모임 수만 조회
+
     const pastMeetingsCount = await prisma.meeting.count({
       where: {
         date: {
-          lt: now // 현재 시점보다 이전 모임만
+          lt: now
         }
       }
     })
-    
+
     const members = await prisma.member.findMany({
       include: {
         attendances: {
           include: {
-            meeting: true
+            meeting: {
+              select: {
+                date: true
+              }
+            }
           }
         }
       },
@@ -29,28 +33,37 @@ export async function GET() {
       }
     })
 
-    // 참석률 통계 계산 (지난 모임 기준)
-    const membersWithStats = members.map(member => {
-      // 지난 모임 중에서 참석한 모임만 카운트
+    return members.map(member => {
       const attendedMeetings = member.attendances.filter(
-        attendance => attendance.status === 'ATTENDING' && 
-        new Date(attendance.meeting.date) < now // 지난 모임만
+        attendance => attendance.status === 'ATTENDING' &&
+        new Date(attendance.meeting.date) < now
       ).length
-      
+
       const attendanceRate = pastMeetingsCount > 0 ? (attendedMeetings / pastMeetingsCount) * 100 : 0
 
       return {
         ...member,
         attendanceStats: {
-          totalMeetings: pastMeetingsCount, // 지난 모임 수
-          attendedMeetings, // 실제 참석한 모임 수 (지난 모임 중)
-          attendanceRate: Math.round(attendanceRate * 100) / 100 // 소수점 2자리까지
+          totalMeetings: pastMeetingsCount,
+          attendedMeetings,
+          attendanceRate: Math.round(attendanceRate * 100) / 100
         },
-        attendances: undefined // 프론트엔드에 불필요한 데이터 제거
+        attendances: undefined
       }
     })
-    
-    return NextResponse.json(membersWithStats)
+  },
+  ['members'],
+  {
+    revalidate: 60,
+    tags: ['members']
+  }
+)
+
+// GET - 모든 멤버 조회
+export async function GET() {
+  try {
+    const members = await getCachedMembers()
+    return NextResponse.json(members)
   } catch (error: unknown) {
     console.error('Failed to fetch members:', error)
     return NextResponse.json(
@@ -95,6 +108,9 @@ export async function POST(request: NextRequest) {
         clubId: club.id
       }
     })
+
+    // 캐시 무효화
+    revalidatePath('/api/members')
 
     return NextResponse.json(member, { status: 201 })
   } catch (error: unknown) {

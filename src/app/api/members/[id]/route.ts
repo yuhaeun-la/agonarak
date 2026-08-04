@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 
 // PUT - 멤버 수정
@@ -28,6 +29,9 @@ export async function PUT(
         avatarUrl: avatarUrl !== undefined ? (avatarUrl || null) : undefined
       }
     })
+
+    // 캐시 무효화
+    revalidatePath('/api/members')
 
     return NextResponse.json(member)
   } catch (error: unknown) {
@@ -65,6 +69,9 @@ export async function DELETE(
     await prisma.member.delete({
       where: { id }
     })
+
+    // 캐시 무효화
+    revalidatePath('/api/members')
 
     return NextResponse.json({ message: 'Member deleted successfully' })
   } catch (error: unknown) {

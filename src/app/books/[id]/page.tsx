@@ -27,27 +27,11 @@ import { ArrowLeft, BookOpen, Edit, Loader2 } from 'lucide-react'
 import { StarRatingDisplay, StarRatingInput } from '@/components/ui/star-rating'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import Link from 'next/link'
-
-interface Book {
-  id: string
-  title: string
-  author: string
-  genres: string[]
-  notes: string
-  rating: number
-  thumbnail: string | null
-  registeredDate: string
-  createdAt: string
-  addedBy: string
-  addedByAvatarUrl: string | null
-  addedById: string | null
-}
-
-interface Member {
-  id: string
-  nickname: string
-  avatarUrl: string | null
-}
+import { useBook } from '@/hooks/useBooks'
+import { useMembers } from '@/hooks/useMembers'
+import { Skeleton } from '@/components/ui/skeleton'
+import type { Book } from '@/lib/api/books'
+import type { Member } from '@/lib/api/members'
 
 interface SearchResult {
   title: string
@@ -76,9 +60,10 @@ export default function BookDetailPage() {
   const params = useParams()
   const bookId = params.id as string
 
-  const [book, setBook] = useState<Book | null>(null)
-  const [members, setMembers] = useState<Member[]>([])
-  const [loading, setLoading] = useState(true)
+  // React Query hooks
+  const { data: book, isLoading: bookLoading, refetch: refetchBook } = useBook(bookId)
+  const { data: members = [] } = useMembers()
+  const loading = bookLoading
 
   // 수정 관련 상태
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -104,12 +89,6 @@ export default function BookDetailPage() {
   const searchContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (bookId) {
-      Promise.all([fetchBook(), fetchMembers()]).finally(() => setLoading(false))
-    }
-  }, [bookId])
-
-  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
         setShowSearchResults(false)
@@ -118,28 +97,6 @@ export default function BookDetailPage() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
-
-  const fetchBook = async () => {
-    try {
-      const response = await fetch(`/api/books/${bookId}`)
-      if (!response.ok) return
-      const data = await response.json()
-      setBook(data)
-    } catch (error) {
-      console.error('Error fetching book:', error)
-    }
-  }
-
-  const fetchMembers = async () => {
-    try {
-      const response = await fetch('/api/members')
-      if (!response.ok) return
-      const data = await response.json()
-      setMembers(data)
-    } catch (error) {
-      console.error('Error fetching members:', error)
-    }
-  }
 
   const searchBooks = useCallback(async (query: string) => {
     if (query.trim().length < 2) {
@@ -228,7 +185,7 @@ export default function BookDetailPage() {
         throw new Error(errorData.error || 'Failed to update book')
       }
 
-      await fetchBook()
+      await refetchBook()
       setIsEditDialogOpen(false)
       setError('')
     } catch (error: unknown) {

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { Navbar } from '@/components/layout/navbar'
 import { Button } from '@/components/ui/button'
@@ -28,51 +28,37 @@ import { StarRatingDisplay } from '@/components/ui/star-rating'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { resizeImage } from '@/lib/resizeImage'
 import Link from 'next/link'
-
-interface Book {
-  id: string
-  title: string
-  author: string
-  genres: string[]
-  rating: number
-  thumbnail: string | null
-  registeredDate: string
-  addedById: string | null
-}
-
-interface Member {
-  id: string
-  nickname: string
-  role: 'LEADER' | 'MEMBER'
-  contact: string
-  avatarUrl: string | null
-  attendanceStats?: {
-    totalMeetings: number
-    attendedMeetings: number
-    attendanceRate: number
-  }
-}
-
-interface Meeting {
-  id: string
-  date: string
-  location: string
-  title: string
-  attendances: Array<{
-    member: { id: string; nickname: string }
-    status: 'ATTENDING' | 'NOT_ATTENDING' | 'UNDECIDED'
-  }>
-}
+import { useMembers } from '@/hooks/useMembers'
+import { useBooks } from '@/hooks/useBooks'
+import { useMeetings } from '@/hooks/useMeetings'
+import type { Member } from '@/lib/api/members'
+import type { Book } from '@/lib/api/books'
+import type { Meeting } from '@/lib/api/meetings'
 
 export default function MemberDetailPage() {
   const router = useRouter()
   const params = useParams()
   const memberId = params.id as string
 
-  const [member, setMember] = useState<Member | null>(null)
-  const [books, setBooks] = useState<Book[]>([])
-  const [meetings, setMeetings] = useState<Meeting[]>([])
-  const [loading, setLoading] = useState(true)
+  // React Query hooks
+  const { data: allMembers = [], isLoading: membersLoading, refetch: refetchMembers } = useMembers()
+  const { data: allBooks = [], isLoading: booksLoading } = useBooks()
+  const { data: allMeetings = [], isLoading: meetingsLoading } = useMeetings()
+
+  const loading = membersLoading || booksLoading || meetingsLoading
+
+  // Memoized computed values
+  const member = useMemo(() =>
+    allMembers.find((m) => m.id === memberId) || null,
+    [allMembers, memberId]
+  )
+
+  const books = useMemo(() =>
+    allBooks.filter((b) => b.addedById === memberId),
+    [allBooks, memberId]
+  )
+
+  const meetings = allMeetings
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -85,51 +71,11 @@ export default function MemberDetailPage() {
   })
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (memberId) {
-      Promise.all([fetchMember(), fetchBooks(), fetchMeetings()]).finally(() => setLoading(false))
-    }
-  }, [memberId])
-
-  const fetchMember = async () => {
-    try {
-      const response = await fetch('/api/members')
-      if (!response.ok) return
-      const members = await response.json()
-      const found = members.find((m: Member) => m.id === memberId)
-      if (found) setMember(found)
-    } catch (error) {
-      console.error('Error fetching member:', error)
-    }
-  }
-
-  const fetchBooks = async () => {
-    try {
-      const response = await fetch('/api/books')
-      if (!response.ok) return
-      const allBooks = await response.json()
-      setBooks(allBooks.filter((b: Book) => b.addedById === memberId))
-    } catch (error) {
-      console.error('Error fetching books:', error)
-    }
-  }
-
-  const fetchMeetings = async () => {
-    try {
-      const response = await fetch('/api/meetings')
-      if (!response.ok) return
-      const allMeetings = await response.json()
-      setMeetings(allMeetings)
-    } catch (error) {
-      console.error('Error fetching meetings:', error)
-    }
-  }
-
   const handleOpenEdit = () => {
     if (!member) return
     setFormData({
       nickname: member.nickname,
-      role: member.role,
+      role: (member.role === 'LEADER' ? 'LEADER' : 'MEMBER') as 'LEADER' | 'MEMBER',
       contact: member.contact || '',
       avatarUrl: member.avatarUrl,
     })
@@ -174,7 +120,7 @@ export default function MemberDetailPage() {
         const errorData = await response.json()
         throw new Error(errorData.error || 'Failed to update member')
       }
-      await fetchMember()
+      await refetchMembers()
       setIsEditDialogOpen(false)
       setError('')
     } catch (error: unknown) {

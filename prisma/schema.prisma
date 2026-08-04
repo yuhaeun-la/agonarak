@@ -68,6 +68,7 @@ model Book {
   genres         BookGenre[]
   meetingBooks   MeetingBook[]
   readingNotes   ReadingNote[]
+  attachments    BookAttachment[]
 }
 
 model MeetingBook {
@@ -133,6 +134,21 @@ model ReadingNote {
   member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
   @@unique([bookId, memberId])
+}
+
+model BookAttachment {
+  id            String   @id @default(cuid())
+  bookId        String
+  type          String   // 'file' | 'link'
+  name          String
+  url           String
+  fileType      String?
+  fileSize      Int?
+  ogTitle       String?
+  ogDescription String?
+  ogImage       String?
+  createdAt     DateTime @default(now())
+  book          Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
 }
 
 enum MemberRole {

@@ -1,5 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { unstable_cache, revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
+
+// 캐시된 책 상세 조회 함수
+const getCachedBook = (id: string) =>
+  unstable_cache(
+    async () => {
+      const book = await prisma.book.findUnique({
+        where: { id },
+        include: {
+          addedBy: { select: { id: true, nickname: true, avatarUrl: true } },
+          genres: { include: { genre: { select: { name: true } } } },
+        },
+      })
+
+      if (!book) return null
+
+      return {
+        id: book.id,
+        title: book.title,
+        author: book.author,
+        notes: book.notes || '',
+        rating: book.rating || 0,
+        thumbnail: book.thumbnail || null,
+        registeredDate: book.registeredDate.toISOString(),
+        createdAt: book.createdAt.toISOString(),
+        genres: book.genres.map((bg) => bg.genre.name),
+        addedBy: book.addedBy?.nickname || 'Unknown',
+        addedByAvatarUrl: book.addedBy?.avatarUrl || null,
+        addedById: book.addedById || null,
+      }
+    },
+    [`book-${id}`],
+    {
+      revalidate: 60,
+      tags: ['books', `book-${id}`]
+    }
+  )()
 
 // GET - 책 상세 조회
 export async function GET(
@@ -8,33 +45,13 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-
-    const book = await prisma.book.findUnique({
-      where: { id },
-      include: {
-        addedBy: { select: { id: true, nickname: true, avatarUrl: true } },
-        genres: { include: { genre: { select: { name: true } } } },
-      },
-    })
+    const book = await getCachedBook(id)
 
     if (!book) {
       return NextResponse.json({ error: 'Book not found' }, { status: 404 })
     }
 
-    return NextResponse.json({
-      id: book.id,
-      title: book.title,
-      author: book.author,
-      notes: book.notes || '',
-      rating: book.rating || 0,
-      thumbnail: book.thumbnail || null,
-      registeredDate: book.registeredDate.toISOString(),
-      createdAt: book.createdAt.toISOString(),
-      genres: book.genres.map((bg) => bg.genre.name),
-      addedBy: book.addedBy?.nickname || 'Unknown',
-      addedByAvatarUrl: book.addedBy?.avatarUrl || null,
-      addedById: book.addedById || null,
-    })
+    return NextResponse.json(book)
   } catch (error) {
     console.error('Failed to fetch book:', error)
     return NextResponse.json({ error: 'Failed to fetch book' }, { status: 500 })
@@ -65,6 +82,10 @@ export async function DELETE(
     await prisma.book.delete({
       where: { id }
     })
+
+    // 캐시 무효화
+    revalidatePath('/api/books')
+    revalidatePath(`/api/books/${id}`)
 
     return NextResponse.json(
       { message: 'Book deleted successfully' },
@@ -171,6 +192,10 @@ export async function PUT(
 
       return book
     })
+
+    // 캐시 무효화
+    revalidatePath('/api/books')
+    revalidatePath(`/api/books/${id}`)
 
     return NextResponse.json(updatedBook, { status: 200 })
   } catch (error: unknown) {

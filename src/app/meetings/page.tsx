@@ -7,6 +7,9 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
+import { useMeetings } from '@/hooks/useMeetings'
+import { useMembers } from '@/hooks/useMembers'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Dialog,
   DialogContent,
@@ -56,15 +59,19 @@ interface Meeting {
 }
 
 export default function Meetings() {
+  // React Query로 데이터 가져오기
+  const { data: meetings = [], isLoading: meetingsLoading, error: meetingsError, refetch: refetchMeetings } = useMeetings()
+  const { data: members = [], isLoading: membersLoading } = useMembers()
+
+  const loading = meetingsLoading || membersLoading
+  const dataError = meetingsError ? '모임 데이터를 불러오는데 실패했습니다.' : ''
+
   const [searchTerm, setSearchTerm] = useState('')
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [meetings, setMeetings] = useState<Meeting[]>([])
-  const [members, setMembers] = useState<{id: string; nickname: string}[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null)
+  const [error, setError] = useState('')
 
   const LOCATION_PRESETS = ['디스코드', '오프라인'] as const
 
@@ -80,37 +87,6 @@ export default function Meetings() {
   const locationType = LOCATION_PRESETS.includes(formData.location as typeof LOCATION_PRESETS[number])
     ? formData.location
     : '기타'
-
-  useEffect(() => {
-    Promise.all([fetchMeetings(), fetchMembers()])
-  }, [])
-
-  const fetchMeetings = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch('/api/meetings')
-      if (!response.ok) throw new Error('Failed to fetch meetings')
-      const data = await response.json()
-      setMeetings(data)
-      setError('')
-    } catch (error) {
-      console.error('Error fetching meetings:', error)
-      setError('모임 데이터를 불러오는데 실패했습니다.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchMembers = async () => {
-    try {
-      const response = await fetch('/api/members')
-      if (!response.ok) throw new Error('Failed to fetch members')
-      const data = await response.json()
-      setMembers(data)
-    } catch (error) {
-      console.error('Error fetching members:', error)
-    }
-  }
 
   const filteredMeetings = meetings.filter(meeting => {
     const searchLower = searchTerm.toLowerCase()
@@ -149,7 +125,7 @@ export default function Meetings() {
         throw new Error(errorData.error || 'Failed to add meeting')
       }
 
-      await fetchMeetings()
+      await refetchMeetings()
       setFormData({ title: '', date: '', time: '', location: '디스코드', memo: '', attendees: [] })
       setIsAddDialogOpen(false)
       setError('')
@@ -170,7 +146,7 @@ export default function Meetings() {
         const errorData = await response.json()
         throw new Error(errorData.error || 'Failed to delete meeting')
       }
-      await fetchMeetings()
+      await refetchMeetings()
       setError('')
     } catch (error: unknown) {
       console.error('Error deleting meeting:', error)
@@ -223,7 +199,7 @@ export default function Meetings() {
         throw new Error(errorData.error || 'Failed to update meeting')
       }
 
-      await fetchMeetings()
+      await refetchMeetings()
       resetForm()
       setEditingMeeting(null)
       setIsEditDialogOpen(false)
@@ -397,7 +373,7 @@ export default function Meetings() {
           <div>
             <h1 className="text-2xl font-semibold text-foreground font-[family-name:var(--font-heading)]">모임 일정</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              전체 {meetings.length}회 · 예정 {upcomingMeetings.length}회
+              전체 {loading ? '-' : meetings.length}회 · 예정 {loading ? '-' : upcomingMeetings.length}회
             </p>
           </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>

@@ -1,12 +1,17 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Navbar } from '@/components/layout/navbar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
+import { useBooks } from '@/hooks/useBooks'
+import { useMembers } from '@/hooks/useMembers'
+import { Skeleton } from '@/components/ui/skeleton'
+import { bookQueries } from '@/lib/queries/books'
 import {
   Dialog,
   DialogContent,
@@ -81,16 +86,27 @@ const genres = [
 
 export default function Books() {
   const router = useRouter()
+  const queryClient = useQueryClient()
+
+  // React Query로 데이터 가져오기 (자동 캐싱)
+  const { data: books = [], isLoading: booksLoading, error: booksError, refetch: refetchBooks } = useBooks()
+  const { data: members = [], isLoading: membersLoading } = useMembers()
+
+  const loading = booksLoading || membersLoading
+  const dataError = booksError ? '책 데이터를 불러오는데 실패했습니다.' : ''
+
+  // 책 상세 프리페치 (호버 시)
+  const prefetchBook = (bookId: string) => {
+    queryClient.prefetchQuery(bookQueries.detail(bookId))
+  }
+
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedGenre, setSelectedGenre] = useState('all')
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [books, setBooks] = useState<Book[]>([])
-  const [members, setMembers] = useState<Member[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [editingBook, setEditingBook] = useState<Book | null>(null)
+  const [error, setError] = useState('')
 
   const [bookSearchQuery, setBookSearchQuery] = useState('')
   const [bookSearchResults, setBookSearchResults] = useState<SearchResult[]>([])
@@ -111,10 +127,6 @@ export default function Books() {
   })
 
   useEffect(() => {
-    Promise.all([fetchBooks(), fetchMembers()])
-  }, [])
-
-  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
         setShowSearchResults(false)
@@ -123,33 +135,6 @@ export default function Books() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
-
-  const fetchBooks = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch('/api/books')
-      if (!response.ok) throw new Error('Failed to fetch books')
-      const data = await response.json()
-      setBooks(data)
-      setError('')
-    } catch (error) {
-      console.error('Error fetching books:', error)
-      setError('책 데이터를 불러오는데 실패했습니다.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchMembers = async () => {
-    try {
-      const response = await fetch('/api/members')
-      if (!response.ok) throw new Error('Failed to fetch members')
-      const data = await response.json()
-      setMembers(data)
-    } catch (error) {
-      console.error('Error fetching members:', error)
-    }
-  }
 
   const searchBooks = useCallback(async (query: string) => {
     if (query.trim().length < 2) {
@@ -245,7 +230,7 @@ export default function Books() {
         }
       }
 
-      await fetchBooks()
+      await refetchBooks()
       resetForm()
       setIsAddDialogOpen(false)
       setError('')
@@ -306,7 +291,7 @@ export default function Books() {
         throw new Error(errorData.error || 'Failed to update book')
       }
 
-      await fetchBooks()
+      await refetchBooks()
       resetForm()
       setEditingBook(null)
       setIsEditDialogOpen(false)
@@ -328,7 +313,7 @@ export default function Books() {
         const errorData = await response.json()
         throw new Error(errorData.error || 'Failed to delete book')
       }
-      await fetchBooks()
+      await refetchBooks()
       setError('')
     } catch (error: unknown) {
       console.error('Error deleting book:', error)
@@ -540,10 +525,31 @@ export default function Books() {
         )}
 
         {loading ? (
-          <div className="text-center py-16">
-            <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted-foreground mb-4" />
-            <p className="text-sm text-muted-foreground">데이터를 불러오는 중...</p>
-          </div>
+          <>
+            {/* 검색 + 필터 스켈레톤 */}
+            <div className="flex flex-col sm:flex-row gap-3 mb-6">
+              <Skeleton className="h-10 flex-1 max-w-sm" />
+              <Skeleton className="h-10 w-full sm:w-[180px]" />
+            </div>
+
+            {/* 책 카드 그리드 스켈레톤 */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[...Array(6)].map((_, i) => (
+                <Card key={i} className="overflow-hidden">
+                  <CardContent className="p-0">
+                    <div className="flex gap-4 p-4">
+                      <Skeleton className="h-24 w-16 rounded flex-shrink-0" />
+                      <div className="flex-1 flex flex-col gap-2">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-3 w-2/3" />
+                        <Skeleton className="h-4 w-20 mt-auto" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </>
         ) : (
           <>
             {/* 멤버별 독서 현황 */}
@@ -622,7 +628,12 @@ export default function Books() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredBooks.map((book) => (
-                  <Card key={book.id} className="overflow-hidden cursor-pointer hover:border-muted-foreground/30 transition-colors group" onClick={() => router.push(`/books/${book.id}`)}>
+                  <Card
+                    key={book.id}
+                    className="overflow-hidden cursor-pointer hover:border-muted-foreground/30 transition-colors group"
+                    onClick={() => router.push(`/books/${book.id}`)}
+                    onMouseEnter={() => prefetchBook(book.id)}
+                  >
                     <CardContent className="p-0">
                       <div className="flex gap-4 p-4">
                         {book.thumbnail ? (

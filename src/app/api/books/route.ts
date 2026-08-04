@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
+import { unstable_cache, revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 
-// GET - 모든 책 조회
-export async function GET() {
-  try {
+// 캐시된 책 조회 함수
+const getCachedBooks = unstable_cache(
+  async () => {
     const books = await prisma.book.findMany({
       include: {
         addedBy: {
@@ -25,15 +26,26 @@ export async function GET() {
       }
     })
 
-    // 데이터 구조 변환 (프론트엔드에서 사용하기 쉽게)
-    const transformedBooks = books.map((book: any) => ({
+    // 데이터 구조 변환
+    return books.map((book: any) => ({
       ...book,
       genres: book.genres?.map((bg: any) => bg.genre.name) || [],
       addedBy: book.addedBy?.nickname || 'Unknown',
       addedByAvatarUrl: book.addedBy?.avatarUrl || null
     }))
-    
-    return NextResponse.json(transformedBooks)
+  },
+  ['books'],
+  {
+    revalidate: 60, // 60초마다 캐시 재검증
+    tags: ['books']
+  }
+)
+
+// GET - 모든 책 조회
+export async function GET() {
+  try {
+    const books = await getCachedBooks()
+    return NextResponse.json(books)
   } catch (error: unknown) {
     console.error('Failed to fetch books:', error)
     return NextResponse.json(
@@ -147,6 +159,9 @@ export async function POST(request: NextRequest) {
       addedBy: (createdBook as any).addedBy?.nickname || 'Unknown',
       addedByAvatarUrl: (createdBook as any).addedBy?.avatarUrl || null
     }
+
+    // 캐시 무효화
+    revalidatePath('/api/books')
 
     return NextResponse.json(transformedBook, { status: 201 })
   } catch (error: unknown) {

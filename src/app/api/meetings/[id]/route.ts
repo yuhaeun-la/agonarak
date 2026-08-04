@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 
 // DELETE - 모임 삭제
@@ -25,6 +26,9 @@ export async function DELETE(
     await prisma.meeting.delete({
       where: { id }
     })
+
+    // 캐시 무효화
+    revalidatePath('/api/meetings')
 
     return NextResponse.json(
       { message: 'Meeting deleted successfully' },
@@ -116,6 +120,9 @@ export async function PUT(
 
       return meeting
     })
+
+    // 캐시 무효화
+    revalidatePath('/api/meetings')
 
     return NextResponse.json(updatedMeeting, { status: 200 })
   } catch (error: unknown) {

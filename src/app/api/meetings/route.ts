@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { unstable_cache, revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 
-// GET - 모든 모임 조회
-export async function GET() {
-  try {
+// 캐시된 모임 조회 함수
+const getCachedMeetings = unstable_cache(
+  async () => {
     const meetings = await prisma.meeting.findMany({
       include: {
         books: {
@@ -34,8 +35,7 @@ export async function GET() {
       }
     })
 
-    // 데이터 구조 변환
-    const transformedMeetings = meetings.map(meeting => ({
+    return meetings.map(meeting => ({
       ...meeting,
       books: meeting.books.map((mb) => mb.book),
       attendances: meeting.attendances.map((att) => ({
@@ -43,8 +43,19 @@ export async function GET() {
         status: att.status
       }))
     }))
-    
-    return NextResponse.json(transformedMeetings)
+  },
+  ['meetings'],
+  {
+    revalidate: 60,
+    tags: ['meetings']
+  }
+)
+
+// GET - 모든 모임 조회
+export async function GET() {
+  try {
+    const meetings = await getCachedMeetings()
+    return NextResponse.json(meetings)
   } catch (error: unknown) {
     console.error('Failed to fetch meetings:', error)
     return NextResponse.json(
@@ -154,6 +165,9 @@ export async function POST(request: NextRequest) {
 
       }))
     }
+
+    // 캐시 무효화
+    revalidatePath('/api/meetings')
 
     return NextResponse.json(transformedMeeting, { status: 201 })
   } catch (error: unknown) {

@@ -1,12 +1,16 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Navbar } from '@/components/layout/navbar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { useMembers } from '@/hooks/useMembers'
+import { memberQueries } from '@/lib/queries/members'
+import type { Member } from '@/lib/api/members'
 import {
   Dialog,
   DialogContent,
@@ -34,27 +38,22 @@ import { Users, UserPlus, Search, Edit, Trash2, X, MoreHorizontal } from 'lucide
 import { resizeImage } from '@/lib/resizeImage'
 import { useRouter } from 'next/navigation'
 
-interface Member {
-  id: string
-  nickname: string
-  role: 'LEADER' | 'MEMBER'
-  contact: string
-  avatarUrl: string | null
-  attendanceStats?: {
-    totalMeetings: number
-    attendedMeetings: number
-    attendanceRate: number
-  }
-}
-
 export default function Members() {
   const router = useRouter()
+  const queryClient = useQueryClient()
+
+  // React Query로 데이터 가져오기
+  const { data: members = [], isLoading: loading, refetch: refetchMembers } = useMembers()
+
+  // 멤버 상세 프리페치 (호버 시)
+  const prefetchMember = (memberId: string) => {
+    queryClient.prefetchQuery(memberQueries.detail(memberId))
+  }
+
   const [searchTerm, setSearchTerm] = useState('')
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [members, setMembers] = useState<Member[]>([])
   const [editingMember, setEditingMember] = useState<Member | null>(null)
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -65,26 +64,6 @@ export default function Members() {
     avatarUrl: null as string | null
   })
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetchMembers()
-  }, [])
-
-  const fetchMembers = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch('/api/members')
-      if (!response.ok) throw new Error('Failed to fetch members')
-      const data = await response.json()
-      setMembers(data)
-      setError('')
-    } catch (error) {
-      console.error('Error fetching members:', error)
-      setError('멤버 데이터를 불러오는데 실패했습니다.')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const filteredMembers = members.filter(member =>
     member.nickname.toLowerCase().includes(searchTerm.toLowerCase())
@@ -132,7 +111,7 @@ export default function Members() {
         throw new Error(errorData.error || 'Failed to add member')
       }
 
-      await fetchMembers()
+      await refetchMembers()
       resetForm()
       setIsAddDialogOpen(false)
       setError('')
@@ -146,7 +125,12 @@ export default function Members() {
 
   const handleEditMember = (member: Member) => {
     setEditingMember(member)
-    setFormData({ nickname: member.nickname, role: member.role, contact: member.contact || '', avatarUrl: member.avatarUrl })
+    setFormData({
+      nickname: member.nickname,
+      role: (member.role === 'LEADER' ? 'LEADER' : 'MEMBER') as 'LEADER' | 'MEMBER',
+      contact: member.contact || '',
+      avatarUrl: member.avatarUrl
+    })
     setAvatarPreview(member.avatarUrl)
     setIsEditDialogOpen(true)
   }
@@ -173,7 +157,7 @@ export default function Members() {
         throw new Error(errorData.error || 'Failed to update member')
       }
 
-      await fetchMembers()
+      await refetchMembers()
       resetForm()
       setEditingMember(null)
       setIsEditDialogOpen(false)
@@ -195,7 +179,7 @@ export default function Members() {
         const errorData = await response.json()
         throw new Error(errorData.error || 'Failed to delete member')
       }
-      await fetchMembers()
+      await refetchMembers()
       setError('')
     } catch (error: unknown) {
       console.error('Error deleting member:', error)
@@ -330,6 +314,7 @@ export default function Members() {
                 key={member.id}
                 className="cursor-pointer hover:border-muted-foreground/30 transition-colors"
                 onClick={() => router.push(`/members/${member.id}`)}
+                onMouseEnter={() => prefetchMember(member.id)}
               >
                 <CardContent className="p-5 relative">
                   {/* 더보기 메뉴 */}

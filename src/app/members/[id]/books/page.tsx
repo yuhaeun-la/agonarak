@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { Navbar } from '@/components/layout/navbar'
 import { Button } from '@/components/ui/button'
@@ -9,80 +9,43 @@ import { Input } from '@/components/ui/input'
 import { ArrowLeft, BookOpen, Search, Star, Hash, BarChart3 } from 'lucide-react'
 import { StarRatingDisplay } from '@/components/ui/star-rating'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-
-interface Book {
-  id: string
-  title: string
-  author: string
-  genres: string[]
-  notes: string
-  rating: number
-  thumbnail: string | null
-  registeredDate: string
-  createdAt: string
-  addedById: string | null
-}
-
-interface Member {
-  id: string
-  nickname: string
-  role: 'LEADER' | 'MEMBER'
-  contact: string
-  avatarUrl: string | null
-}
+import { useMembers } from '@/hooks/useMembers'
+import { useBooks } from '@/hooks/useBooks'
+import type { Member } from '@/lib/api/members'
+import type { Book } from '@/lib/api/books'
 
 export default function MemberBooksPage() {
   const router = useRouter()
   const params = useParams()
   const memberId = params.id as string
 
-  const [member, setMember] = useState<Member | null>(null)
-  const [books, setBooks] = useState<Book[]>([])
+  // React Query hooks
+  const { data: allMembers = [], isLoading: membersLoading, error: membersError } = useMembers()
+  const { data: allBooks = [], isLoading: booksLoading, error: booksError } = useBooks()
+
   const [searchTerm, setSearchTerm] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
 
-  useEffect(() => {
-    if (memberId) {
-      Promise.all([fetchMember(), fetchMemberBooks()])
-    }
-  }, [memberId])
+  const loading = membersLoading || booksLoading
+  const error = membersError || booksError ? '데이터를 불러오는데 실패했습니다.' : ''
 
-  const fetchMember = async () => {
-    try {
-      const response = await fetch('/api/members')
-      if (!response.ok) throw new Error('Failed to fetch members')
-      const members = await response.json()
-      const foundMember = members.find((m: Member) => m.id === memberId)
-      if (!foundMember) throw new Error('Member not found')
-      setMember(foundMember)
-    } catch (error) {
-      console.error('Error fetching member:', error)
-      setError('멤버 정보를 불러오는데 실패했습니다.')
-    }
-  }
+  // Memoized computed values
+  const member = useMemo(() =>
+    allMembers.find((m) => m.id === memberId) || null,
+    [allMembers, memberId]
+  )
 
-  const fetchMemberBooks = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch('/api/books')
-      if (!response.ok) throw new Error('Failed to fetch books')
-      const allBooks = await response.json()
-      const memberBooks = allBooks.filter((book: Book) => book.addedById === memberId)
-      setBooks(memberBooks)
-      setError('')
-    } catch (error) {
-      console.error('Error fetching member books:', error)
-      setError('책 데이터를 불러오는데 실패했습니다.')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const books = useMemo(() =>
+    allBooks.filter((b) => b.addedById === memberId),
+    [allBooks, memberId]
+  )
 
-  const filteredBooks = books.filter(book =>
-    book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    book.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    book.genres.some(genre => genre.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredBooks = useMemo(() =>
+    books.filter(book =>
+      book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      book.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      book.genres.some(genre => genre.toLowerCase().includes(searchTerm.toLowerCase()))
+    ),
+    [books, searchTerm]
   )
 
   const uniqueBooks = new Map()
