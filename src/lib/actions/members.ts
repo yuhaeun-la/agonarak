@@ -32,8 +32,8 @@ export async function createMemberAction(formData: {
 
     revalidatePath('/api/members')
     revalidatePath('/members')
-    revalidateTag('members')
-    revalidateTag('dashboard')
+    revalidateTag('members', '')
+    revalidateTag('dashboard', '')
     return { success: true }
   } catch (error) {
     console.error('Failed to create member:', error)
@@ -61,8 +61,8 @@ export async function updateMemberAction(id: string, formData: {
     revalidatePath('/api/members')
     revalidatePath('/members')
     revalidatePath(`/members/${id}`)
-    revalidateTag('members')
-    revalidateTag('dashboard')
+    revalidateTag('members', '')
+    revalidateTag('dashboard', '')
     return { success: true }
   } catch (error) {
     console.error('Failed to update member:', error)
@@ -76,8 +76,8 @@ export async function deleteMemberAction(id: string) {
 
     revalidatePath('/api/members')
     revalidatePath('/members')
-    revalidateTag('members')
-    revalidateTag('dashboard')
+    revalidateTag('members', '')
+    revalidateTag('dashboard', '')
     return { success: true }
   } catch (error) {
     console.error('Failed to delete member:', error)

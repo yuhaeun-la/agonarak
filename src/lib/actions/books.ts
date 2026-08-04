@@ -71,8 +71,8 @@ export async function createBookAction(formData: {
 
     revalidatePath('/api/books')
     revalidatePath('/books')
-    revalidateTag('books')
-    revalidateTag('dashboard')
+    revalidateTag('books', '')
+    revalidateTag('dashboard', '')
     return { success: true }
   } catch (error) {
     console.error('Failed to create book:', error)
@@ -135,8 +135,8 @@ export async function updateBookAction(id: string, formData: {
     revalidatePath(`/api/books/${id}`)
     revalidatePath('/books')
     revalidatePath(`/books/${id}`)
-    revalidateTag('books')
-    revalidateTag('dashboard')
+    revalidateTag('books', '')
+    revalidateTag('dashboard', '')
     return { success: true }
   } catch (error) {
     console.error('Failed to update book:', error)
@@ -155,8 +155,8 @@ export async function deleteBookAction(id: string) {
 
     revalidatePath('/api/books')
     revalidatePath('/books')
-    revalidateTag('books')
-    revalidateTag('dashboard')
+    revalidateTag('books', '')
+    revalidateTag('dashboard', '')
     return { success: true }
   } catch (error) {
     console.error('Failed to delete book:', error)
