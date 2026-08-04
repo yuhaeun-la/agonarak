@@ -11,12 +11,12 @@ export default async function GalleryPage() {
     getPastMeetings()
   ])
 
-  // 모임 차수 계산 (첫 모임 = 1차, 시간순)
+  // 모임 차수 계산 (2025년 5월 24일 = 36차부터 시작)
   const meetingsWithNumber = meetingsWithPhotos.map((meeting) => {
     const index = allPastMeetings.findIndex(m => m.id === meeting.id)
     return {
       ...meeting,
-      meetingNumber: index + 1 // 첫 모임(index 0) = 1차
+      meetingNumber: index + 36 // 첫 등록 모임 = 36차
     }
   })
 
