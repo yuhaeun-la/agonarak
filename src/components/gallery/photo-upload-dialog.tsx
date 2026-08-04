@@ -21,13 +21,15 @@ interface PhotoUploadDialogProps {
   onOpenChange: (open: boolean) => void
   meetings: Meeting[]
   preselectedMeetingId?: string
+  isAddingToExistingAlbum?: boolean
 }
 
 export function PhotoUploadDialog({
   open,
   onOpenChange,
   meetings,
-  preselectedMeetingId
+  preselectedMeetingId,
+  isAddingToExistingAlbum = false
 }: PhotoUploadDialogProps) {
   const router = useRouter()
   const [selectedMeetingId, setSelectedMeetingId] = useState(preselectedMeetingId || '')
@@ -148,7 +150,7 @@ export function PhotoUploadDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>앨범 추가</DialogTitle>
+          <DialogTitle>{isAddingToExistingAlbum ? '사진 추가' : '앨범 추가'}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">

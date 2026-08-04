@@ -35,9 +35,13 @@ export function PhotoGalleryContent({
   const router = useRouter()
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
   const [selectedMeetingId, setSelectedMeetingId] = useState<string>()
+  const [isAddingToExisting, setIsAddingToExisting] = useState(false)
 
   const handleUploadClick = (meetingId?: string) => {
     setSelectedMeetingId(meetingId)
+    // meetingId가 있고 meetingsWithNumber에 있으면 기존 앨범에 추가
+    const hasPhotos = meetingId ? meetingsWithNumber.some(m => m.id === meetingId) : false
+    setIsAddingToExisting(hasPhotos)
     setUploadDialogOpen(true)
   }
 
@@ -113,7 +117,7 @@ export function PhotoGalleryContent({
                           onClick={() => handleUploadClick(meeting.id)}
                         >
                           <Plus className="h-3.5 w-3.5 mr-1" />
-                          앨범 추가
+                          사진 추가
                         </Button>
                       )}
                     </div>
@@ -159,6 +163,7 @@ export function PhotoGalleryContent({
         onOpenChange={setUploadDialogOpen}
         meetings={allPastMeetings}
         preselectedMeetingId={selectedMeetingId}
+        isAddingToExistingAlbum={isAddingToExisting}
       />
     </>
   )
