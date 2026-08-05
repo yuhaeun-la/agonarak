@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { ArrowLeft, BookOpen, Edit, Loader2 } from 'lucide-react'
+import { ArrowLeft, BookOpen, Edit, Loader2, ThumbsUp } from 'lucide-react'
 import { StarRatingDisplay, StarRatingInput } from '@/components/ui/star-rating'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import Link from 'next/link'
@@ -69,6 +69,10 @@ export default function BookDetailPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  // 좋아요 관련 상태
+  const [isLiking, setIsLiking] = useState(false)
+  const [likesCount, setLikesCount] = useState(0)
   const [formData, setFormData] = useState({
     title: '',
     author: '',
@@ -87,6 +91,12 @@ export default function BookDetailPage() {
   const [showSearchResults, setShowSearchResults] = useState(false)
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const searchContainerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (book) {
+      setLikesCount(book.notesLikes || 0)
+    }
+  }, [book])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -157,6 +167,26 @@ export default function BookDetailPage() {
     setBookSearchQuery(book.title)
     setError('')
     setIsEditDialogOpen(true)
+  }
+
+  const handleLikeNotes = async () => {
+    if (isLiking) return
+
+    setIsLiking(true)
+    try {
+      const response = await fetch(`/api/books/${bookId}/like`, {
+        method: 'POST',
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setLikesCount(data.notesLikes)
+      }
+    } catch (error) {
+      console.error('Failed to like notes:', error)
+    } finally {
+      setIsLiking(false)
+    }
   }
 
   const handleUpdateBook = async () => {
@@ -363,6 +393,18 @@ export default function BookDetailPage() {
             <p className="text-xs tracking-widest uppercase text-muted-foreground mb-3">메모</p>
             <div className="border rounded-lg p-4">
               <p className="text-sm text-foreground whitespace-pre-wrap">{book.notes}</p>
+              <div className="flex items-center gap-2 mt-4 pt-3 border-t">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLikeNotes}
+                  disabled={isLiking}
+                  className="gap-1.5"
+                >
+                  <ThumbsUp className="h-4 w-4" />
+                  <span className="text-sm">{likesCount}</span>
+                </Button>
+              </div>
             </div>
           </div>
         )}

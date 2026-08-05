@@ -4,6 +4,7 @@ export interface Book {
   author: string
   genres: string[]
   notes: string
+  notesLikes: number
   rating: number
   thumbnail: string | null
   registeredDate: string

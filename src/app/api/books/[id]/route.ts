@@ -21,6 +21,7 @@ const getCachedBook = (id: string) =>
         title: book.title,
         author: book.author,
         notes: book.notes || '',
+        notesLikes: book.notesLikes || 0,
         rating: book.rating || 0,
         thumbnail: book.thumbnail || null,
         registeredDate: book.registeredDate.toISOString(),
