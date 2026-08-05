@@ -1,58 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { revalidatePath } from 'next/cache'
+import { revalidateTag } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 
-// DELETE - 모임 삭제
-export async function DELETE(
+// GET - 모임 상세 조회
+export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params
 
-    // 모임이 존재하는지 확인
-    const existingMeeting = await prisma.meeting.findUnique({
+    const meeting = await prisma.meeting.findUnique({
       where: { id }
     })
 
-    if (!existingMeeting) {
+    if (!meeting) {
       return NextResponse.json(
         { error: 'Meeting not found' },
         { status: 404 }
       )
     }
 
-    // 모임 삭제 (Cascade로 관련 데이터도 자동 삭제됨)
-    await prisma.meeting.delete({
-      where: { id }
-    })
-
-    // 캐시 무효화
-    revalidatePath('/api/meetings')
-
+    return NextResponse.json(meeting)
+  } catch (error) {
+    console.error('Failed to fetch meeting:', error)
     return NextResponse.json(
-      { message: 'Meeting deleted successfully' },
-      { status: 200 }
-    )
-  } catch (error: unknown) {
-    console.error('Failed to delete meeting:', error)
-    
-    // Prisma 에러 처리
-    if (error && typeof error === 'object' && 'code' in error && error.code === 'P2025') {
-      return NextResponse.json(
-        { error: 'Meeting not found' },
-        { status: 404 }
-      )
-    }
-    
-    return NextResponse.json(
-      { error: 'Failed to delete meeting' },
+      { error: 'Failed to fetch meeting' },
       { status: 500 }
     )
   }
 }
 
-// PUT - 모임 수정
+// PUT - 모임 정보 수정
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -60,81 +39,34 @@ export async function PUT(
   try {
     const { id } = await params
     const body = await request.json()
-    const { title, date, time, location, memo, attendees } = body
+    const { date, time, location, title } = body
 
-    // 입력 검증
-    if (!title || !date || !time) {
+    if (!date || !time) {
       return NextResponse.json(
-        { error: 'Title, date and time are required' },
+        { error: 'Date and time are required' },
         { status: 400 }
       )
     }
 
-    // 모임이 존재하는지 확인
-    const existingMeeting = await prisma.meeting.findUnique({
-      where: { id }
-    })
+    const dateTime = new Date(`${date}T${time}`)
 
-    if (!existingMeeting) {
-      return NextResponse.json(
-        { error: 'Meeting not found' },
-        { status: 404 }
-      )
-    }
-
-    // 날짜와 시간을 합쳐서 DateTime으로 변환
-    // 한국 시간(KST, UTC+9)을 고려하여 UTC로 저장
-    const [year, month, day] = date.split('-').map(Number)
-    const [hours, minutes] = time.split(':').map(Number)
-    // KST 시간을 UTC로 변환 (9시간 빼기)
-    const meetingDateTime = new Date(Date.UTC(year, month - 1, day, hours - 9, minutes, 0, 0))
-
-    // 트랜잭션으로 모임 정보 수정 및 참석자 업데이트
-    const updatedMeeting = await prisma.$transaction(async (tx) => {
-      // 모임 정보 업데이트
-      const meeting = await tx.meeting.update({
-        where: { id },
-        data: {
-          title,
-          date: meetingDateTime,
-          location: location || '',
-          memo: memo || ''
-        }
-      })
-
-      // 기존 참석 기록 삭제
-      await tx.attendance.deleteMany({
-        where: { meetingId: id }
-      })
-
-      // 새로운 참석자 추가 (제공된 경우)
-      if (attendees && attendees.length > 0) {
-        await tx.attendance.createMany({
-          data: attendees.map((memberId: string) => ({
-            meetingId: id,
-            memberId,
-            status: 'ATTENDING'
-          }))
-        })
+    const meeting = await prisma.meeting.update({
+      where: { id },
+      data: {
+        title: title || '모임',
+        date: dateTime,
+        location: location || null
       }
-
-      return meeting
     })
 
     // 캐시 무효화
-    revalidatePath('/api/meetings')
+    revalidateTag('meetings', '')
+    revalidateTag('photos', '')
+    revalidateTag('dashboard', '')
 
-    return NextResponse.json(updatedMeeting, { status: 200 })
-  } catch (error: unknown) {
+    return NextResponse.json(meeting)
+  } catch (error) {
     console.error('Failed to update meeting:', error)
-    
-    if (error && typeof error === 'object' && 'code' in error && error.code === 'P2025') {
-      return NextResponse.json(
-        { error: 'Meeting not found' },
-        { status: 404 }
-      )
-    }
-    
     return NextResponse.json(
       { error: 'Failed to update meeting' },
       { status: 500 }

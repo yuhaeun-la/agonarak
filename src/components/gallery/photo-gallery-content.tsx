@@ -3,8 +3,9 @@
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Plus, ImageIcon, Trash2, Loader2 } from 'lucide-react'
+import { Plus, ImageIcon, Trash2, Loader2, Edit } from 'lucide-react'
 import { PhotoUploadDialog } from '@/components/gallery/photo-upload-dialog'
+import { MeetingEditDialog } from '@/components/gallery/meeting-edit-dialog'
 import { deleteMeetingPhoto } from '@/lib/actions/photos'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -34,6 +35,7 @@ export function PhotoGalleryContent({
 }: PhotoGalleryContentProps) {
   const router = useRouter()
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [selectedMeetingId, setSelectedMeetingId] = useState<string>()
   const [isAddingToExisting, setIsAddingToExisting] = useState(false)
   const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null)
@@ -45,6 +47,11 @@ export function PhotoGalleryContent({
     const hasPhotos = meetingId ? meetingsWithNumber.some(m => m.id === meetingId) : false
     setIsAddingToExisting(hasPhotos)
     setUploadDialogOpen(true)
+  }
+
+  const handleEditClick = (meetingId: string) => {
+    setSelectedMeetingId(meetingId)
+    setEditDialogOpen(true)
   }
 
   const handleDeletePhoto = async (photoId: string) => {
@@ -139,16 +146,25 @@ export function PhotoGalleryContent({
                           {meeting.location || '장소 미정'}
                         </p>
                       </div>
-                      {canAddMore && (
+                      <div className="flex gap-2">
                         <Button
                           size="sm"
-                          variant="outline"
-                          onClick={() => handleUploadClick(meeting.id)}
+                          variant="ghost"
+                          onClick={() => handleEditClick(meeting.id)}
                         >
-                          <Plus className="h-3.5 w-3.5 mr-1" />
-                          사진 추가
+                          <Edit className="h-3.5 w-3.5" />
                         </Button>
-                      )}
+                        {canAddMore && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleUploadClick(meeting.id)}
+                          >
+                            <Plus className="h-3.5 w-3.5 mr-1" />
+                            사진 추가
+                          </Button>
+                        )}
+                      </div>
                     </div>
 
                     {/* 사진 썸네일 영역 */}
@@ -198,6 +214,13 @@ export function PhotoGalleryContent({
         meetings={allPastMeetings}
         preselectedMeetingId={selectedMeetingId}
         isAddingToExistingAlbum={isAddingToExisting}
+      />
+
+      {/* Edit Dialog */}
+      <MeetingEditDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        meetingId={selectedMeetingId}
       />
     </>
   )

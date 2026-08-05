@@ -154,26 +154,28 @@ export function PhotoUploadDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {/* Meeting Selection */}
-          <div className="space-y-2">
-            <Label>모임 선택</Label>
-            <Select value={selectedMeetingId} onValueChange={setSelectedMeetingId}>
-              <SelectTrigger>
-                <SelectValue placeholder="모임을 선택하세요" />
-              </SelectTrigger>
-              <SelectContent>
-                {sortedMeetings.map((meeting) => {
-                  const meetingDate = new Date(meeting.date)
-                  const dateStr = `${meetingDate.getFullYear()}년 ${meetingDate.getMonth() + 1}월 ${meetingDate.getDate()}일`
-                  return (
-                    <SelectItem key={meeting.id} value={meeting.id}>
-                      {dateStr} - {meeting.location || '장소 미정'}
-                    </SelectItem>
-                  )
-                })}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Meeting Selection - 새 앨범 추가할 때만 표시 */}
+          {!isAddingToExistingAlbum && (
+            <div className="space-y-2">
+              <Label>모임 선택</Label>
+              <Select value={selectedMeetingId} onValueChange={setSelectedMeetingId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="모임을 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sortedMeetings.map((meeting) => {
+                    const meetingDate = new Date(meeting.date)
+                    const dateStr = `${meetingDate.getFullYear()}년 ${meetingDate.getMonth() + 1}월 ${meetingDate.getDate()}일`
+                    return (
+                      <SelectItem key={meeting.id} value={meeting.id}>
+                        {dateStr} - {meeting.location || '장소 미정'}
+                      </SelectItem>
+                    )
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* File Upload */}
           <div className="space-y-2">
